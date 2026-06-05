@@ -9,5 +9,5 @@
     "resolveJsonModule": true,
     "allowJs": true
   },
-  "include": ["server.ts", "api/**/*"]
+  "include": ["api/**/*"]
 }
