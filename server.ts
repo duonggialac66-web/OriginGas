@@ -10,6 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/api/test-health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
 // Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
