@@ -15,7 +15,7 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.PROD ? '' : 'https://origin-gas.vercel.app';
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [deliveryReports, setDeliveryReports] = useState<DeliveryReport[]>([]);
