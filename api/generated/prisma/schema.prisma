@@ -4,9 +4,9 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
-  output   = "../api/generated/prisma"
+  output     = "../api/generated/prisma"
 }
 
 datasource db {
@@ -14,34 +14,34 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  username    String   @unique
-  password    String?  // Nếu có chức năng login thực tế
-  role        String   @default("employee") // "admin" | "employee"
-  phone       String?
-  startDate   DateTime?
-  status      String   @default("active") // "active" | "inactive"
-  avatarUrl   String?  // Dùng cho Cloudinary (ảnh đại diện)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(uuid())
+  name      String
+  username  String    @unique
+  password  String? // Nếu có chức năng login thực tế
+  role      String    @default("employee") // "admin" | "employee"
+  phone     String?
+  startDate DateTime?
+  status    String    @default("active") // "active" | "inactive"
+  avatarUrl String? // Dùng cho Cloudinary (ảnh đại diện)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  reports     DeliveryReport[]
+  reports DeliveryReport[]
 }
 
 model DeliveryReport {
   id             String   @id @default(uuid())
   employeeId     String
   employee       User     @relation(fields: [employeeId], references: [id])
-  date           String   // Lưu ngày dạng "YYYY-MM-DD"
+  date           String // Lưu ngày dạng "YYYY-MM-DD"
   customerName   String
-  quantity       Int      // Số lượng bình đầy giao cho khách
+  quantity       Int // Số lượng bình đầy giao cho khách
   containerType  String
   unitPrice      Float
   total          Float
   actualReceived Float
   notes          String?
-  receiptUrl     String?  // Dùng cho Cloudinary (ảnh hóa đơn/biên nhận)
+  receiptUrl     String? // Dùng cho Cloudinary (ảnh hóa đơn/biên nhận)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
