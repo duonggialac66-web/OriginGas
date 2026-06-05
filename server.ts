@@ -1,14 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
-import authRoutes from './api/routes/auth';
-import employeeRoutes from './api/routes/employees';
-import reportRoutes from './api/routes/reports';
-import inventoryRoutes from './api/routes/inventory';
-
-dotenv.config();
-
+import authRoutes from './api/modules/auth/auth.route';
+import employeeRoutes from './api/modules/users/users.route';
+import reportRoutes from './api/modules/reports/reports.route';
+import inventoryRoutes from './api/modules/inventory/inventory.route';
 const app = express();
 app.use(cors());
 app.use(express.json());
