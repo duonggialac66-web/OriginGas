@@ -1,4 +1,4 @@
-import { usersRepository } from './users.repository';
+import { usersRepository } from './users.repository.js';
 import bcrypt from 'bcryptjs';
 
 export class UsersService {

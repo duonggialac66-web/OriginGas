@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { inventoryService } from './inventory.service';
+import { inventoryService } from './inventory.service.js';
 
 export class InventoryController {
   async getInventory(req: Request, res: Response) {

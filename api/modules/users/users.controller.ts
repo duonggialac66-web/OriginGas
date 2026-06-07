@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { usersService } from './users.service';
+import { usersService } from './users.service.js';
 
 export class UsersController {
   async getEmployees(req: any, res: any) {

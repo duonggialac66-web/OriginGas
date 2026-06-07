@@ -1,4 +1,4 @@
-import { reportsRepository } from './reports.repository';
+import { reportsRepository } from './reports.repository.js';
 
 export class ReportsService {
   async getReports(queryDate?: string, userRole?: string, userId?: string) {

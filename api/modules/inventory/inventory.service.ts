@@ -1,4 +1,4 @@
-import { inventoryRepository } from './inventory.repository';
+import { inventoryRepository } from './inventory.repository.js';
 
 export class InventoryService {
   async getAllInventory() {

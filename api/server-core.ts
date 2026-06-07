@@ -2,10 +2,10 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import authRoutes from './modules/auth/auth.route';
-import employeeRoutes from './modules/users/users.route';
-import reportRoutes from './modules/reports/reports.route';
-import inventoryRoutes from './modules/inventory/inventory.route';
+import authRoutes from './modules/auth/auth.route.js';
+import employeeRoutes from './modules/users/users.route.js';
+import reportRoutes from './modules/reports/reports.route.js';
+import inventoryRoutes from './modules/inventory/inventory.route.js';
 
 const app = express();
 app.use(cors());
