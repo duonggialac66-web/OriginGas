@@ -16,7 +16,7 @@ export function LoginPage() {
     if (!username || !password) return;
     setError('');
 
-    const API_BASE_URL = import.meta.env.PROD ? '' : 'https://origin-gas.vercel.app';
+    const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
     try {
       // Gọi API thực tế
