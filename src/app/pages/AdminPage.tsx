@@ -737,18 +737,18 @@ export function AdminPage() {
             </div>
 
             {/* Thống kê tổng */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
                 <div className="text-xs font-semibold opacity-80 mb-1">Tổng doanh thu</div>
-                <div className="text-2xl font-extrabold">{(filteredRevenue / 1000000).toFixed(2)}M ₫</div>
+                <div className="text-base sm:text-2xl font-extrabold">{(filteredRevenue / 1000000).toFixed(2)}M ₫</div>
               </div>
-              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-5 text-white shadow-xl">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
                 <div className="text-xs font-semibold opacity-80 mb-1">Số đơn hàng</div>
-                <div className="text-2xl font-extrabold">{filteredReports.length}</div>
+                <div className="text-base sm:text-2xl font-extrabold">{filteredReports.length}</div>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 text-white shadow-xl">
+              <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
                 <div className="text-xs font-semibold opacity-80 mb-1">Tổng số bình</div>
-                <div className="text-2xl font-extrabold">{filteredQuantity}</div>
+                <div className="text-base sm:text-2xl font-extrabold">{filteredQuantity}</div>
               </div>
             </div>
 
@@ -770,16 +770,59 @@ export function AdminPage() {
                 <div className="space-y-8">
                   {groupedReports.map((group) => (
                     <div key={group.employee.id} className="bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden animate-fade-in">
-                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
-                        <div className="font-bold text-xl flex items-center gap-3">
-                          <UserCircle className="w-7 h-7" />
+                      {/* Header nhân viên */}
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 py-4 flex justify-between items-center text-white flex-wrap gap-2">
+                        <div className="font-bold text-lg sm:text-xl flex items-center gap-3">
+                          <UserCircle className="w-6 h-6 sm:w-7 sm:h-7" />
                           {group.employee.name}
                         </div>
-                        <div className="text-sm bg-white/20 px-4 py-1.5 rounded-full font-bold">
+                        <div className="text-xs sm:text-sm bg-white/20 px-3 sm:px-4 py-1.5 rounded-full font-bold">
                           {group.reports.length} đơn · {group.totalRevenue.toLocaleString('vi-VN')} ₫
                         </div>
                       </div>
-                      <div className="overflow-x-auto">
+
+                      {/* MOBILE: Card layout (hiển thị trên màn hình nhỏ) */}
+                      <div className="md:hidden divide-y divide-gray-100">
+                        {group.reports.map((report, index) => (
+                          <div key={report.id} className={`p-4 ${index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}>
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="font-bold text-gray-900 text-sm">{report.customerName}</div>
+                                <div className="text-xs text-gray-500 mt-0.5">{new Date(report.date).toLocaleDateString('vi-VN')} · {report.containerType}</div>
+                              </div>
+                              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">SL: {report.quantity}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                              <div className="text-gray-500">Đơn giá</div>
+                              <div className="text-right text-gray-700 font-semibold">{report.unitPrice.toLocaleString('vi-VN')} ₫</div>
+                              <div className="text-gray-500">Thành tiền</div>
+                              <div className="text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</div>
+                              <div className="text-gray-500">Thực nhận</div>
+                              <div className="text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</div>
+                              {report.notes && (
+                                <>
+                                  <div className="text-gray-500">Ghi chú</div>
+                                  <div className="text-right text-gray-600">{report.notes}</div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {/* Footer tổng cộng mobile */}
+                        <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div className="font-extrabold text-blue-800">Tổng số bình</div>
+                            <div className="text-right font-extrabold text-blue-800">{group.totalQuantity}</div>
+                            <div className="font-extrabold text-blue-800">Tổng thành tiền</div>
+                            <div className="text-right font-extrabold text-green-700">{group.totalRevenue.toLocaleString('vi-VN')} ₫</div>
+                            <div className="font-extrabold text-blue-800">Tổng thực nhận</div>
+                            <div className="text-right font-extrabold text-orange-700">{group.totalReceived.toLocaleString('vi-VN')} ₫</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DESKTOP: Table layout (ẩn trên màn hình nhỏ) */}
+                      <div className="hidden md:block overflow-x-auto">
                         <table className="w-full">
                           <thead>
                             <tr className="bg-blue-50/50 border-b border-gray-200">
