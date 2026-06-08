@@ -29,6 +29,36 @@ export class ReportsRepository {
       })
     ]);
   }
+
+  async findById(id: string) {
+    return prisma.deliveryReport.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+  }
+
+  async updateReportTransaction(id: string, updateData: any, inventoryUpdates: { containerType: string, change: number }[]) {
+    const transactionOperations = [
+      prisma.deliveryReport.update({
+        where: { id },
+        data: updateData,
+        include: { employee: true }
+      })
+    ];
+
+    for (const update of inventoryUpdates) {
+      transactionOperations.push(
+        prisma.inventory.update({
+          where: { containerType: update.containerType },
+          data: {
+            fullQuantity: { increment: update.change }
+          }
+        }) as any
+      );
+    }
+
+    return prisma.$transaction(transactionOperations);
+  }
 }
 
 export const reportsRepository = new ReportsRepository();

@@ -52,6 +52,75 @@ export class ReportsService {
       employeeName: newReport.employee.name
     };
   }
+
+  async updateReport(id: string, userId: string, userRole: string, data: any) {
+    const existingReport = await reportsRepository.findById(id);
+    if (!existingReport) {
+      throw new Error('Không tìm thấy báo cáo');
+    }
+
+    // Nhân viên chỉ được sửa báo cáo của chính mình
+    if (userRole === 'employee' && existingReport.employeeId !== userId) {
+      throw new Error('Bạn không có quyền chỉnh sửa báo cáo này');
+    }
+
+    const quantity = Number(data.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      throw new Error('Số lượng không hợp lệ');
+    }
+
+    const oldType = existingReport.containerType;
+    const oldQty = existingReport.quantity;
+    const newType = data.containerType;
+    const newQty = quantity;
+
+    const inventoryUpdates: { containerType: string, change: number }[] = [];
+
+    if (oldType === newType) {
+      const diff = newQty - oldQty; // Nếu newQty > oldQty, diff > 0, cần bớt đi trong kho
+      if (diff !== 0) {
+        if (diff > 0) {
+          // Cần lấy thêm từ kho
+          const inventory = await reportsRepository.getInventoryByType(newType);
+          if (!inventory || inventory.fullQuantity < diff) {
+            throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
+          }
+        }
+        // change = -diff. Ví dụ: cần lấy thêm 2 bình, change = -2. Cần trả lại 2 bình, change = +2.
+        inventoryUpdates.push({ containerType: newType, change: -diff });
+      }
+    } else {
+      // Khác loại: trả lại số lượng cũ cho loại cũ, trừ số lượng mới từ loại mới
+      const oldInventory = await reportsRepository.getInventoryByType(oldType);
+      const newInventory = await reportsRepository.getInventoryByType(newType);
+
+      if (!newInventory || newInventory.fullQuantity < newQty) {
+        throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${newInventory ? newInventory.fullQuantity : 0}`);
+      }
+
+      inventoryUpdates.push({ containerType: oldType, change: oldQty });
+      inventoryUpdates.push({ containerType: newType, change: -newQty });
+    }
+
+    const reportData = {
+      date: data.date,
+      customerName: data.customerName,
+      quantity,
+      containerType: newType,
+      unitPrice: Number(data.unitPrice),
+      total: Number(data.total),
+      actualReceived: Number(data.actualReceived),
+      notes: data.notes || '',
+      receiptUrl: data.receiptUrl || existingReport.receiptUrl,
+    };
+
+    const [updatedReport] = await reportsRepository.updateReportTransaction(id, reportData, inventoryUpdates);
+
+    return {
+      ...updatedReport,
+      employeeName: updatedReport.employee.name
+    };
+  }
 }
 
 export const reportsService = new ReportsService();

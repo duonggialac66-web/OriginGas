@@ -21,6 +21,7 @@ model User {
   phone       String?
   startDate   DateTime?
   status      String   @default("active") // "active" | "inactive"
+  baseSalary  Float    @default(0) // Lương cơ bản
   avatarUrl   String?  // Dùng cho Cloudinary (ảnh đại diện)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -50,4 +51,30 @@ model Inventory {
   containerType String   @unique
   fullQuantity  Int      @default(0) // Bình đầy (có gas)
   updatedAt     DateTime @updatedAt
+}
+
+model SalaryConfig {
+  id            String   @id @default(uuid())
+  containerType String   @unique
+  commission    Float    @default(0) // Số tiền nhận được cho mỗi bình giao thành công
+  updatedAt     DateTime @updatedAt
+}
+
+model SalaryFormula {
+  id        String   @id @default(uuid())
+  formula   String   @default("baseSalary * overtime")
+  updatedAt DateTime @updatedAt
+}
+
+model MonthlySalaryInput {
+  id               String   @id @default(uuid())
+  employeeId       String
+  month            String   // YYYY-MM
+  overtime         Float    @default(1.0)
+  workDays         Float    @default(26.0)
+  bonus            Float    @default(0.0)
+  calculatedSalary Float    @default(0.0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([employeeId, month])
 }

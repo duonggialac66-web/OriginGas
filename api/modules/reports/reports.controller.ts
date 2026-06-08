@@ -29,6 +29,25 @@ export class ReportsController {
       }
     }
   }
+
+  async updateReport(req: any, res: any) {
+    try {
+      const updated = await reportsService.updateReport(
+        req.params.id,
+        req.user?.id,
+        req.user?.role,
+        req.body
+      );
+      res.json(updated);
+    } catch (error: any) {
+      if (error.message.includes('Kho không đủ') || error.message === 'Số lượng không hợp lệ' || error.message === 'Không tìm thấy báo cáo' || error.message === 'Bạn không có quyền chỉnh sửa báo cáo này') {
+        res.status(400).json({ message: error.message });
+      } else {
+        console.error('Lỗi cập nhật báo cáo:', error);
+        res.status(500).json({ message: 'Lỗi khi cập nhật báo cáo' });
+      }
+    }
+  }
 }
 
 export const reportsController = new ReportsController();

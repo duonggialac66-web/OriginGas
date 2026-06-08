@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useNavigate } from 'react-router';
@@ -19,18 +19,37 @@ import {
   XCircle,
   UserCircle,
   Database,
-  PlusCircle
+  PlusCircle,
+  Save,
+  Filter,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Tab = 'overview' | 'employees' | 'reports' | 'inventory';
+type Tab = 'overview' | 'employees' | 'reports' | 'inventory' | 'salary';
 
 export function AdminPage() {
   const { user, logout } = useAuth();
-  const { deliveryReports, employees, inventory, addEmployee, updateEmployee, deleteEmployee, importInventory, updateInventoryQuantity } = useData();
+  const { 
+    deliveryReports, 
+    employees, 
+    inventory, 
+    salaryConfigs,
+    salaryFormula,
+    addEmployee, 
+    updateEmployee, 
+    deleteEmployee, 
+    importInventory, 
+    updateInventoryQuantity,
+    updateSalaryConfig,
+    getCalculatedSalaries,
+    updateSalaryFormula,
+    updateMonthlySalaryInput
+  } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [newEmployee, setNewEmployee] = useState({
     name: '',
     username: '',
@@ -38,11 +57,109 @@ export function AdminPage() {
     phone: '',
     startDate: new Date().toISOString().split('T')[0],
     status: 'active' as const,
+    baseSalary: '',
   });
 
   const [importData, setImportData] = useState({ type: '', fullQuantity: 0 });
   const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null);
   const [editInventoryQuantity, setEditInventoryQuantity] = useState({ full: 0 });
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [calculatedSalaries, setCalculatedSalaries] = useState<any[]>([]);
+  const [commissionForm, setCommissionForm] = useState({ containerType: '', commission: '' });
+  const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  // Bộ lọc báo cáo — mặc định là ngày hôm nay
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [filterDateFrom, setFilterDateFrom] = useState(todayStr);
+  const [filterDateTo, setFilterDateTo] = useState(todayStr);
+  const [filterEmployee, setFilterEmployee] = useState('');
+  const [filterContainer, setFilterContainer] = useState('');
+
+  const [formulaInput, setFormulaInput] = useState('');
+  const [editingInputs, setEditingInputs] = useState<Record<string, { overtime: string; workDays: string; bonus: string }>>({});
+
+  useEffect(() => {
+    if (salaryFormula) {
+      setFormulaInput(salaryFormula);
+    }
+  }, [salaryFormula]);
+
+  const handleSaveFormula = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateSalaryFormula(formulaInput);
+      toast.success('Đã cập nhật công thức tính lương!');
+      if (calculatedSalaries.length > 0) {
+        // Run calculate salary again to refresh figures
+        const salaries = await getCalculatedSalaries(selectedMonth);
+        setCalculatedSalaries(salaries);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Lỗi khi cập nhật công thức');
+    }
+  };
+
+  const handleSaveMonthlyInput = async (employeeId: string) => {
+    const inputs = editingInputs[employeeId];
+    if (!inputs) return;
+
+    try {
+      await updateMonthlySalaryInput(
+        employeeId,
+        selectedMonth,
+        parseFloat(inputs.overtime) || 0,
+        parseFloat(inputs.workDays) || 0,
+        parseFloat(inputs.bonus) || 0
+      );
+      toast.success('Đã lưu thông số thành công!');
+      // Refresh calculated salaries
+      const salaries = await getCalculatedSalaries(selectedMonth);
+      setCalculatedSalaries(salaries);
+    } catch (error: any) {
+      toast.error(error.message || 'Lỗi khi lưu thông số');
+    }
+  };
+
+  const handleUpdateCommission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const comm = parseFloat(commissionForm.commission);
+    if (!commissionForm.containerType) return toast.error('Vui lòng chọn loại bình');
+    if (isNaN(comm) || comm < 0) return toast.error('Hoa hồng phải lớn hơn hoặc bằng 0');
+    
+    await updateSalaryConfig(commissionForm.containerType, comm);
+    toast.success(`Đã cập nhật hoa hồng cho ${commissionForm.containerType}`);
+    setCommissionForm({ containerType: '', commission: '' });
+  };
+
+  const handleCalculateSalary = async () => {
+    setIsCalculating(true);
+    try {
+      const salaries = await getCalculatedSalaries(selectedMonth);
+      setCalculatedSalaries(salaries);
+      
+      // Initialize editing inputs state for each calculated employee
+      const initialInputs: Record<string, { overtime: string; workDays: string; bonus: string }> = {};
+      salaries.forEach(sal => {
+        initialInputs[sal.employeeId] = {
+          overtime: String(sal.overtime),
+          workDays: String(sal.workDays),
+          bonus: String(sal.bonus)
+        };
+      });
+      setEditingInputs(initialInputs);
+
+      if (salaries.length === 0) {
+        toast.info('Không tìm thấy dữ liệu báo cáo cho tháng này');
+      } else {
+        toast.success(`Đã tính lương cho tháng ${selectedMonth}`);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tính lương');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   const handleImportInventory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +176,22 @@ export function AdminPage() {
 
   const handleAddEmployee = (e: React.FormEvent) => {
     e.preventDefault();
-    addEmployee(newEmployee);
-    toast.success('Đã thêm nhân viên thành công!');
+    if (editingEmployeeId) {
+      updateEmployee(editingEmployeeId, {
+        name: newEmployee.name,
+        phone: newEmployee.phone,
+        status: newEmployee.status,
+        baseSalary: Number(newEmployee.baseSalary) || 0,
+      });
+      toast.success('Đã cập nhật nhân viên thành công!');
+      setEditingEmployeeId(null);
+    } else {
+      addEmployee({
+        ...newEmployee,
+        baseSalary: Number(newEmployee.baseSalary) || 0,
+      });
+      toast.success('Đã thêm nhân viên thành công!');
+    }
     setShowAddEmployee(false);
     setNewEmployee({
       name: '',
@@ -69,7 +200,22 @@ export function AdminPage() {
       phone: '',
       startDate: new Date().toISOString().split('T')[0],
       status: 'active',
+      baseSalary: '',
     });
+  };
+
+  const handleStartEditEmployee = (emp: any) => {
+    setEditingEmployeeId(emp.id);
+    setNewEmployee({
+      name: emp.name,
+      username: emp.username,
+      password: '',
+      phone: emp.phone,
+      startDate: new Date(emp.startDate).toISOString().split('T')[0],
+      status: emp.status,
+      baseSalary: String(emp.baseSalary || 0),
+    });
+    setShowAddEmployee(true);
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {
@@ -104,8 +250,25 @@ export function AdminPage() {
     };
   }).sort((a, b) => b.todayRevenue - a.todayRevenue);
 
+  // Lọc báo cáo theo bộ lọc
+  const filteredReports = deliveryReports.filter(r => {
+    if (filterDateFrom && r.date < filterDateFrom) return false;
+    if (filterDateTo && r.date > filterDateTo) return false;
+    if (filterEmployee && r.employeeId !== filterEmployee) return false;
+    if (filterContainer && r.containerType !== filterContainer) return false;
+    return true;
+  });
+
+  // Có bộ lọc "khác với hôm nay" thì mới hiện nút reset
+  const hasActiveFilter = filterDateFrom !== todayStr || filterDateTo !== todayStr || filterEmployee || filterContainer;
+
+  const filteredRevenue = filteredReports.reduce((s, r) => s + r.total, 0);
+  const filteredQuantity = filteredReports.reduce((s, r) => s + r.quantity, 0);
+
+  const containerTypes = [...new Set(deliveryReports.map(r => r.containerType))];
+
   const groupedReports = employees.map(emp => {
-    const empReports = todayReports.filter(r => r.employeeId === emp.id);
+    const empReports = filteredReports.filter(r => r.employeeId === emp.id);
     return {
       employee: emp,
       reports: empReports,
@@ -191,6 +354,17 @@ export function AdminPage() {
           >
             <Database className="w-6 h-6" />
             Quản lý kho
+          </button>
+          <button
+            onClick={() => setActiveTab('salary')}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
+              activeTab === 'salary'
+                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+            }`}
+          >
+            <DollarSign className="w-6 h-6" />
+            Tính lương nhân viên
           </button>
         </div>
 
@@ -349,7 +523,9 @@ export function AdminPage() {
 
             {showAddEmployee && (
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100 animate-fade-in">
-                <h3 className="text-2xl font-extrabold text-gray-900 mb-6">✨ Thêm nhân viên mới</h3>
+                <h3 className="text-2xl font-extrabold text-gray-900 mb-6">
+                  {editingEmployeeId ? '✏️ Cập nhật thông tin nhân viên' : '✨ Thêm nhân viên mới'}
+                </h3>
                 <form onSubmit={handleAddEmployee} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -370,18 +546,21 @@ export function AdminPage() {
                         onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
                         className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
                         required
+                        disabled={!!editingEmployeeId}
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800 mb-2.5">Mật khẩu</label>
-                      <input
-                        type="password"
-                        value={newEmployee.password}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
-                        required
-                      />
-                    </div>
+                    {!editingEmployeeId && (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800 mb-2.5">Mật khẩu</label>
+                        <input
+                          type="password"
+                          value={newEmployee.password}
+                          onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                          className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                          required
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2.5">Số điện thoại</label>
                       <input
@@ -390,6 +569,19 @@ export function AdminPage() {
                         onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
                         className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
                         required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-2.5">Lương cơ bản (VND)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="50000"
+                        value={newEmployee.baseSalary}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, baseSalary: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        required
+                        placeholder="VD: 5000000"
                       />
                     </div>
                     <div>
@@ -408,11 +600,23 @@ export function AdminPage() {
                       type="submit"
                       className="flex-1 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white py-4 rounded-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-red-700 transition-all shadow-xl hover:scale-[1.02]"
                     >
-                      Thêm nhân viên
+                      {editingEmployeeId ? 'Cập nhật nhân viên' : 'Thêm nhân viên'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowAddEmployee(false)}
+                      onClick={() => {
+                        setShowAddEmployee(false);
+                        setEditingEmployeeId(null);
+                        setNewEmployee({
+                          name: '',
+                          username: '',
+                          password: '',
+                          phone: '',
+                          startDate: new Date().toISOString().split('T')[0],
+                          status: 'active',
+                          baseSalary: '',
+                        });
+                      }}
                       className="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-all"
                     >
                       Hủy
@@ -440,7 +644,10 @@ export function AdminPage() {
 
                   <h3 className="font-extrabold text-xl text-gray-900 mb-2">{employee.name}</h3>
                   <p className="text-sm text-gray-600 mb-1.5 font-medium">👤 {employee.username}</p>
-                  <p className="text-sm text-gray-600 mb-4 font-medium">📱 {employee.phone}</p>
+                  <p className="text-sm text-gray-600 mb-1.5 font-medium">📱 {employee.phone}</p>
+                  <p className="text-sm text-green-600 mb-4 font-bold">
+                    💵 Lương cơ bản: {(employee.baseSalary || 0).toLocaleString('vi-VN')} ₫
+                  </p>
 
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-5 font-semibold bg-gray-50 px-3 py-2 rounded-lg">
                     <Calendar className="w-4 h-4 text-orange-500" />
@@ -455,8 +662,16 @@ export function AdminPage() {
                       {employee.status === 'active' ? 'Tạm nghỉ' : 'Kích hoạt'}
                     </button>
                     <button
+                      onClick={() => handleStartEditEmployee(employee)}
+                      className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border-2 border-blue-200 shadow-md hover:scale-[1.02]"
+                      title="Sửa thông tin"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteEmployee(employee.id, employee.name)}
-                      className="px-5 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all border-2 border-red-200 shadow-md hover:scale-[1.02]"
+                      className="px-4 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all border-2 border-red-200 shadow-md hover:scale-[1.02]"
+                      title="Xóa nhân viên"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -468,94 +683,149 @@ export function AdminPage() {
         )}
 
         {activeTab === 'reports' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
+          <div className="space-y-6">
+            {/* Header + Bộ lọc */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-                  <FileText className="w-7 h-7 text-white" />
+                  <Filter className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Báo cáo giao hàng
-                  </h2>
-                  <p className="text-gray-600 font-medium mt-1">📅 Ngày: {new Date().toLocaleDateString('vi-VN')}</p>
+                  <h2 className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Bộ lọc báo cáo</h2>
+                  <p className="text-gray-500 text-sm mt-0.5">Lọc theo ngày, nhân viên hoặc loại bình</p>
                 </div>
               </div>
-              <div className="text-right bg-gradient-to-br from-green-50 to-emerald-50 px-6 py-4 rounded-2xl border-2 border-green-200">
-                <div className="text-sm font-semibold text-gray-600">Tổng doanh thu</div>
-                <div className="text-3xl font-extrabold text-green-600 mt-1">
-                  {totalRevenue.toLocaleString('vi-VN')} ₫
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Từ ngày</label>
+                  <input type="date" value={filterDateFrom}
+                    onChange={e => setFilterDateFrom(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Đến ngày</label>
+                  <input type="date" value={filterDateTo}
+                    onChange={e => setFilterDateTo(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Nhân viên</label>
+                  <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
+                    <option value="">Tất cả nhân viên</option>
+                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Loại bình</label>
+                  <select value={filterContainer} onChange={e => setFilterContainer(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
+                    <option value="">Tất cả loại bình</option>
+                    {containerTypes.map(ct => <option key={ct} value={ct}>{ct}</option>)}
+                  </select>
+                </div>
+              </div>
+              {hasActiveFilter && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-sm text-blue-600 font-semibold">🔍 Đang lọc — {filteredReports.length} báo cáo</p>
+                  <button onClick={() => { setFilterDateFrom(todayStr); setFilterDateTo(todayStr); setFilterEmployee(''); setFilterContainer(''); }}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 font-bold transition-all">
+                    <X className="w-3.5 h-3.5" /> Về hôm nay
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Thống kê tổng */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl">
+                <div className="text-xs font-semibold opacity-80 mb-1">Tổng doanh thu</div>
+                <div className="text-2xl font-extrabold">{(filteredRevenue / 1000000).toFixed(2)}M ₫</div>
+              </div>
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-5 text-white shadow-xl">
+                <div className="text-xs font-semibold opacity-80 mb-1">Số đơn hàng</div>
+                <div className="text-2xl font-extrabold">{filteredReports.length}</div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 text-white shadow-xl">
+                <div className="text-xs font-semibold opacity-80 mb-1">Tổng số bình</div>
+                <div className="text-2xl font-extrabold">{filteredQuantity}</div>
               </div>
             </div>
 
-            {groupedReports.length === 0 ? (
-              <div className="py-12 text-center border-2 border-dashed border-gray-300 rounded-2xl bg-white/50 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-3">
-                  <FileText className="w-16 h-16 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Chưa có báo cáo nào trong ngày hôm nay</p>
+            {/* Bảng kết quả */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
                 </div>
+                <h3 className="text-xl font-extrabold text-gray-900">Danh sách báo cáo</h3>
               </div>
-            ) : (
-              <div className="space-y-8">
-                {groupedReports.map((group) => (
-                  <div key={group.employee.id} className="bg-white/90 backdrop-blur-sm rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden animate-fade-in hover-lift">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
-                      <div className="font-bold text-xl flex items-center gap-3">
-                        <UserCircle className="w-7 h-7" />
-                        {group.employee.name}
+
+              {groupedReports.length === 0 ? (
+                <div className="py-12 text-center border-2 border-dashed border-gray-300 rounded-2xl">
+                  <FileText className="w-16 h-16 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">{hasActiveFilter ? 'Không tìm thấy báo cáo phù hợp với bộ lọc' : 'Chưa có báo cáo nào'}</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {groupedReports.map((group) => (
+                    <div key={group.employee.id} className="bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden animate-fade-in">
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
+                        <div className="font-bold text-xl flex items-center gap-3">
+                          <UserCircle className="w-7 h-7" />
+                          {group.employee.name}
+                        </div>
+                        <div className="text-sm bg-white/20 px-4 py-1.5 rounded-full font-bold">
+                          {group.reports.length} đơn · {group.totalRevenue.toLocaleString('vi-VN')} ₫
+                        </div>
                       </div>
-                      <div className="text-sm bg-white/20 px-4 py-1.5 rounded-full font-bold backdrop-blur-md shadow-inner">
-                        {group.reports.length} đơn hàng
-                      </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="bg-blue-50/50 border-b border-gray-200">
-                            <th className="text-left py-4 px-5 text-sm font-bold text-gray-700">Khách hàng</th>
-                            <th className="text-center py-4 px-5 text-sm font-bold text-gray-700">SL</th>
-                            <th className="text-left py-4 px-5 text-sm font-bold text-gray-700">Loại bình</th>
-                            <th className="text-right py-4 px-5 text-sm font-bold text-gray-700">Đơn giá</th>
-                            <th className="text-right py-4 px-5 text-sm font-bold text-gray-700">Thành tiền</th>
-                            <th className="text-right py-4 px-5 text-sm font-bold text-gray-700">Thực nhận</th>
-                            <th className="text-left py-4 px-5 text-sm font-bold text-gray-700">Ghi chú</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {group.reports.map((report, index) => (
-                            <tr key={report.id} className={`border-b border-gray-100 transition-colors ${
-                              index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'
-                            } hover:bg-orange-50`}>
-                              <td className="py-4 px-5 text-sm font-semibold text-gray-900">{report.customerName}</td>
-                              <td className="py-4 px-5 text-sm text-center font-bold text-blue-600">{report.quantity}</td>
-                              <td className="py-4 px-5 text-sm text-gray-700">{report.containerType}</td>
-                              <td className="py-4 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
-                              <td className="py-4 px-5 text-sm text-right font-bold text-green-600">
-                                {report.total.toLocaleString('vi-VN')} ₫
-                              </td>
-                              <td className="py-4 px-5 text-sm text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
-                              <td className="py-4 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-blue-50/50 border-b border-gray-200">
+                              <th className="text-left py-3 px-5 text-xs font-bold text-gray-600">Ngày</th>
+                              <th className="text-left py-3 px-5 text-xs font-bold text-gray-600">Khách hàng</th>
+                              <th className="text-center py-3 px-5 text-xs font-bold text-gray-600">SL</th>
+                              <th className="text-left py-3 px-5 text-xs font-bold text-gray-600">Loại bình</th>
+                              <th className="text-right py-3 px-5 text-xs font-bold text-gray-600">Đơn giá</th>
+                              <th className="text-right py-3 px-5 text-xs font-bold text-gray-600">Thành tiền</th>
+                              <th className="text-right py-3 px-5 text-xs font-bold text-gray-600">Thực nhận</th>
+                              <th className="text-left py-3 px-5 text-xs font-bold text-gray-600">Ghi chú</th>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
-                            <td className="py-4 px-5 text-sm font-extrabold text-blue-800 text-center">Tổng</td>
-                            <td className="py-4 px-5 text-sm text-center font-extrabold text-blue-800">{group.totalQuantity}</td>
-                            <td className="py-4 px-5"></td>
-                            <td className="py-4 px-5"></td>
-                            <td className="py-4 px-5 text-sm text-right font-extrabold text-green-700">{group.totalRevenue.toLocaleString('vi-VN')} ₫</td>
-                            <td className="py-4 px-5 text-sm text-right font-extrabold text-orange-700">{group.totalReceived.toLocaleString('vi-VN')} ₫</td>
-                            <td className="py-4 px-5"></td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {group.reports.map((report, index) => (
+                              <tr key={report.id} className={`border-b border-gray-100 transition-colors ${
+                                index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'
+                              } hover:bg-orange-50`}>
+                                <td className="py-3 px-5 text-xs font-semibold text-gray-500">{new Date(report.date).toLocaleDateString('vi-VN')}</td>
+                                <td className="py-3 px-5 text-sm font-semibold text-gray-900">{report.customerName}</td>
+                                <td className="py-3 px-5 text-sm text-center font-bold text-blue-600">{report.quantity}</td>
+                                <td className="py-3 px-5 text-sm text-gray-700">{report.containerType}</td>
+                                <td className="py-3 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
+                                <td className="py-3 px-5 text-sm text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</td>
+                                <td className="py-3 px-5 text-sm text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                                <td className="py-3 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
+                              <td colSpan={2} className="py-3 px-5 text-sm font-extrabold text-blue-800">Tổng cộng</td>
+                              <td className="py-3 px-5 text-sm text-center font-extrabold text-blue-800">{group.totalQuantity}</td>
+                              <td /><td />
+                              <td className="py-3 px-5 text-sm text-right font-extrabold text-green-700">{group.totalRevenue.toLocaleString('vi-VN')} ₫</td>
+                              <td className="py-3 px-5 text-sm text-right font-extrabold text-orange-700">{group.totalReceived.toLocaleString('vi-VN')} ₫</td>
+                              <td />
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
           </div>
@@ -679,6 +949,243 @@ export function AdminPage() {
                     Thêm vào kho
                   </button>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'salary' && (
+          <div className="space-y-8 animate-fade-in text-gray-900">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <DollarSign className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+                  Cấu hình & Tính lương tự động
+                </h2>
+                <p className="text-gray-400 font-medium mt-1">📊 Thiết lập công thức và cập nhật thông số nhân viên hàng tháng</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Cột 1: Cấu hình Công thức */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    🔧 Công thức lương
+                  </h3>
+                  <form onSubmit={handleSaveFormula} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-2">Công thức toán học</label>
+                      <textarea
+                        value={formulaInput}
+                        onChange={e => setFormulaInput(e.target.value)}
+                        placeholder="VD: baseSalary * overtime"
+                        rows={3}
+                        className="w-full px-4 py-3 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-mono text-sm"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg"
+                    >
+                      <Save className="w-5 h-5" />
+                      Lưu công thức
+                    </button>
+                  </form>
+                </div>
+
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Biến số khả dụng</h3>
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <code className="font-bold text-red-600">baseSalary</code>: Lương cơ bản của nhân viên
+                    </div>
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <code className="font-bold text-blue-600">overtime</code>: Số công tăng ca (hệ số tăng ca)
+                    </div>
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <code className="font-bold text-green-600">workDays</code>: Số ngày công làm việc thực tế
+                    </div>
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <code className="font-bold text-orange-600">bonus</code>: Tiền thưởng thêm (VND)
+                    </div>
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <code className="font-bold text-purple-600">deliveries</code>: Tổng số bình gas đã giao
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500 leading-relaxed">
+                    <p className="font-bold mb-1">Ví dụ công thức:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li><code className="bg-gray-100 px-1 py-0.5 rounded">baseSalary * overtime</code></li>
+                      <li><code className="bg-gray-100 px-1 py-0.5 rounded">baseSalary * (workDays / 26) + bonus</code></li>
+                      <li><code className="bg-gray-100 px-1 py-0.5 rounded">baseSalary + deliveries * 10000 + bonus</code></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cột 2 & 3: Bảng tính lương */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+                  <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+                    <h3 className="text-xl font-bold text-gray-900">Thông số lương & Tính toán</h3>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="month"
+                        value={selectedMonth}
+                        onChange={e => setSelectedMonth(e.target.value)}
+                        className="px-4 py-2.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl outline-none font-bold focus:ring-2 focus:ring-orange-500"
+                      />
+                      <button
+                        onClick={handleCalculateSalary}
+                        disabled={isCalculating}
+                        className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold hover:scale-[1.02] transition-all shadow-md disabled:opacity-50"
+                      >
+                        {isCalculating ? 'Đang tính...' : 'Tính lương'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {calculatedSalaries.length === 0 ? (
+                    <div className="py-12 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
+                      <DollarSign className="w-14 h-14 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 font-medium">Bấm nút "Tính lương" để tải danh sách nhân viên và bắt đầu tính lương</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {calculatedSalaries.map(sal => {
+                        const isExpanded = expandedEmployeeId === sal.employeeId;
+                        const empInputs = editingInputs[sal.employeeId] || { overtime: '1', workDays: '26', bonus: '0' };
+                        
+                        return (
+                          <div key={sal.employeeId} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm transition-all hover:shadow-md">
+                            {/* Header dòng lương nhân viên */}
+                            <div className="p-5 bg-gray-50/50 border-b border-gray-100">
+                              <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                  <h4 className="font-extrabold text-lg text-gray-900">{sal.employeeName}</h4>
+                                  <p className="text-xs text-gray-500 mt-0.5">SĐT: {sal.phone || 'N/A'} | Lương cơ bản: {sal.baseSalary.toLocaleString('vi-VN')} ₫</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="block text-xs text-gray-500 font-medium">Thực nhận</span>
+                                  <span className="font-extrabold text-orange-600 text-xl">
+                                    {sal.error ? '⚠️ Lỗi công thức' : `${sal.totalSalary.toLocaleString('vi-VN')} ₫`}
+                                  </span>
+                                </div>
+                              </div>
+                              {sal.error && (
+                                <div className="mt-2 text-xs font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-200">
+                                  Lỗi: {sal.error}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Khu vực nhập biến số tháng */}
+                            <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 items-end bg-white">
+                              <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1.5">Tăng ca (Hệ số)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  value={empInputs.overtime}
+                                  onChange={e => setEditingInputs({
+                                    ...editingInputs,
+                                    [sal.employeeId]: { ...empInputs, overtime: e.target.value }
+                                  })}
+                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1.5">Ngày công thực tế</label>
+                                <input
+                                  type="number"
+                                  step="1"
+                                  min="0"
+                                  value={empInputs.workDays}
+                                  onChange={e => setEditingInputs({
+                                    ...editingInputs,
+                                    [sal.employeeId]: { ...empInputs, workDays: e.target.value }
+                                  })}
+                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1.5">Thưởng thêm (VND)</label>
+                                <input
+                                  type="number"
+                                  step="10000"
+                                  min="0"
+                                  value={empInputs.bonus}
+                                  onChange={e => setEditingInputs({
+                                    ...editingInputs,
+                                    [sal.employeeId]: { ...empInputs, bonus: e.target.value }
+                                  })}
+                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleSaveMonthlyInput(sal.employeeId)}
+                                  className="flex-1 py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                                  title="Lưu thông số & Tính lại"
+                                >
+                                  <Save className="w-4 h-4" />
+                                  Lưu
+                                </button>
+                                <button
+                                  onClick={() => setExpandedEmployeeId(isExpanded ? null : sal.employeeId)}
+                                  className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                  {isExpanded ? 'Đóng' : 'Đơn gas'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Chi tiết bình gas đã giao */}
+                            {isExpanded && (
+                              <div className="p-5 border-t border-gray-100 bg-gray-50/30 text-gray-900">
+                                <div className="flex justify-between items-center mb-3">
+                                  <h5 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                                    Chi tiết gas đã giao trong tháng ({sal.totalDeliveries} bình)
+                                  </h5>
+                                  <span className="text-xs font-semibold text-gray-500">
+                                    Công thức sử dụng: <code className="bg-gray-100 px-1 py-0.5 rounded font-mono text-gray-800">{sal.formula}</code>
+                                  </span>
+                                </div>
+                                {sal.breakdown.length === 0 ? (
+                                  <p className="text-xs text-gray-500 italic">Không có báo cáo giao gas trong tháng này</p>
+                                ) : (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="border-b border-gray-200 text-gray-500 font-bold">
+                                          <th className="text-left py-2">Loại bình</th>
+                                          <th className="text-center py-2">Số lượng đã giao</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {sal.breakdown.map((item: any, idx: number) => (
+                                          <tr key={idx} className="border-b border-gray-100">
+                                            <td className="py-2 font-semibold text-gray-700">{item.containerType}</td>
+                                            <td className="py-2 text-center font-bold text-blue-600">{item.quantity} bình</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

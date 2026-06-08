@@ -6,12 +6,14 @@ import authRoutes from './modules/auth/auth.route.js';
 import employeeRoutes from './modules/users/users.route.js';
 import reportRoutes from './modules/reports/reports.route.js';
 import inventoryRoutes from './modules/inventory/inventory.route.js';
+import salaryRoutes from './modules/salary/salary.route.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/test-health', (req, res) => {
+// Health check
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
@@ -20,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/salary', salaryRoutes);
 
 // Chỉ chạy static file serving nếu không phải trên Vercel
 if (!process.env.VERCEL) {

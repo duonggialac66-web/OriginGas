@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Flame, UserCircle, Shield } from 'lucide-react';
+import { API_BASE_URL } from '../lib/api';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export function LoginPage() {
     if (!username || !password) return;
     setError('');
 
-    const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
 
     try {
       // Gọi API thực tế

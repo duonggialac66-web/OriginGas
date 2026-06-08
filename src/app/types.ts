@@ -27,10 +27,40 @@ export interface Employee {
   phone: string;
   startDate: string;
   status: 'active' | 'inactive';
+  baseSalary: number;
 }
 
 export interface Inventory {
   id: string;
   containerType: string;
   fullQuantity: number;
+}
+
+export interface SalaryConfig {
+  id: string;
+  containerType: string;
+  commission: number;
+}
+
+export interface SalaryFormula {
+  id: string;
+  formula: string;
+}
+
+export interface CalculatedSalary {
+  employeeId: string;
+  employeeName: string;
+  phone: string;
+  baseSalary: number;
+  totalDeliveries: number;
+  overtime: number;
+  workDays: number;
+  bonus: number;
+  totalSalary: number;
+  formula: string;
+  error?: string | null;
+  breakdown: {
+    containerType: string;
+    quantity: number;
+  }[];
 }

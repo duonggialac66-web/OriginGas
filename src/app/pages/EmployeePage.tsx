@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useNavigate } from 'react-router';
-import { Flame, LogOut, Plus, FileText, TrendingUp } from 'lucide-react';
+import { Flame, LogOut, Plus, FileText, TrendingUp, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function EmployeePage() {
   const { user, logout } = useAuth();
-  const { addDeliveryReport, deliveryReports, inventory } = useData();
+  const { addDeliveryReport, updateDeliveryReport, deliveryReports, inventory } = useData();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -18,6 +18,33 @@ export function EmployeePage() {
     actualReceived: '',
     notes: '',
   });
+
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+
+  const handleStartEdit = (report: any) => {
+    setEditingReportId(report.id);
+    setFormData({
+      customerName: report.customerName,
+      quantity: String(report.quantity),
+      containerType: report.containerType,
+      unitPrice: String(report.unitPrice),
+      actualReceived: String(report.actualReceived),
+      notes: report.notes || '',
+    });
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReportId(null);
+    setFormData({
+      customerName: '',
+      quantity: '',
+      containerType: inventory.length > 0 ? inventory[0].containerType : '',
+      unitPrice: '',
+      actualReceived: '',
+      notes: '',
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -32,25 +59,45 @@ export function EmployeePage() {
     const total = quantity * unitPrice;
     const actualReceived = parseFloat(formData.actualReceived);
 
-    const result = await addDeliveryReport({
-      employeeId: user!.id,
-      employeeName: user!.name,
-      date: new Date().toISOString().split('T')[0],
-      customerName: formData.customerName,
-      quantity,
-      containerType: formData.containerType,
-      unitPrice,
-      total,
-      actualReceived,
-      notes: formData.notes,
-    });
-    
-    if (result && !result.success) {
-      toast.error(result.message || 'Lỗi khi tạo báo cáo');
-      return;
-    }
+    if (editingReportId) {
+      const result = await updateDeliveryReport(editingReportId, {
+        customerName: formData.customerName,
+        quantity,
+        containerType: formData.containerType,
+        unitPrice,
+        total,
+        actualReceived,
+        notes: formData.notes,
+      });
 
-    toast.success('Đã gửi báo cáo giao gas thành công!');
+      if (result && !result.success) {
+        toast.error(result.message || 'Lỗi khi cập nhật báo cáo');
+        return;
+      }
+
+      toast.success('Cập nhật báo cáo giao gas thành công!');
+      setEditingReportId(null);
+    } else {
+      const result = await addDeliveryReport({
+        employeeId: user!.id,
+        employeeName: user!.name,
+        date: new Date().toISOString().split('T')[0],
+        customerName: formData.customerName,
+        quantity,
+        containerType: formData.containerType,
+        unitPrice,
+        total,
+        actualReceived,
+        notes: formData.notes,
+      });
+      
+      if (result && !result.success) {
+        toast.error(result.message || 'Lỗi khi tạo báo cáo');
+        return;
+      }
+
+      toast.success('Đã gửi báo cáo giao gas thành công!');
+    }
 
     setFormData({
       customerName: '',
@@ -141,11 +188,13 @@ export function EmployeePage() {
 
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100 hover-lift">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 via-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Plus className="w-8 h-8 text-white" />
+            <div className={`w-16 h-16 bg-gradient-to-br ${editingReportId ? 'from-blue-500 to-indigo-600' : 'from-orange-500 via-red-500 to-red-600'} rounded-2xl flex items-center justify-center shadow-lg`}>
+              {editingReportId ? <Pencil className="w-8 h-8 text-white" /> : <Plus className="w-8 h-8 text-white" />}
             </div>
             <div>
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Báo cáo giao gas</h2>
+              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                {editingReportId ? 'Chỉnh sửa báo cáo' : 'Báo cáo giao gas'}
+              </h2>
               <p className="text-sm text-gray-600 font-medium mt-1">📅 Ngày: {new Date().toLocaleDateString('vi-VN')}</p>
             </div>
           </div>
@@ -264,13 +313,34 @@ export function EmployeePage() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:via-red-600 hover:to-red-700 transition-all shadow-2xl hover:shadow-xl hover:scale-[1.02] transform flex items-center justify-center gap-3"
-            >
-              <Plus className="w-6 h-6" />
-              Gửi báo cáo
-            </button>
+            <div className="flex gap-4">
+              {editingReportId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="w-1/3 bg-gray-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-600 transition-all shadow-lg hover:scale-[1.02] transform flex items-center justify-center gap-3"
+                >
+                  <X className="w-6 h-6" />
+                  Hủy chỉnh sửa
+                </button>
+              )}
+              <button
+                type="submit"
+                className={`${editingReportId ? 'w-2/3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700' : 'w-full bg-gradient-to-r from-orange-500 via-red-500 to-red-600 hover:from-orange-600 hover:via-red-600 hover:to-red-700'} text-white py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-xl hover:scale-[1.02] transform flex items-center justify-center gap-3`}
+              >
+                {editingReportId ? (
+                  <>
+                    <Pencil className="w-6 h-6" />
+                    Cập nhật báo cáo
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-6 h-6" />
+                    Gửi báo cáo
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
 
@@ -288,6 +358,7 @@ export function EmployeePage() {
                     <th className="text-right py-4 px-5 text-sm font-bold">Thành tiền</th>
                     <th className="text-right py-4 px-5 text-sm font-bold">Thực nhận</th>
                     <th className="text-left py-4 px-5 text-sm font-bold">Ghi chú</th>
+                    <th className="text-center py-4 px-5 text-sm font-bold w-24">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -304,6 +375,15 @@ export function EmployeePage() {
                       </td>
                       <td className="py-4 px-5 text-sm text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
                       <td className="py-4 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
+                      <td className="py-4 px-5 text-sm text-center">
+                        <button
+                          onClick={() => handleStartEdit(report)}
+                          className="p-2 text-blue-600 hover:text-blue-805 hover:bg-blue-50 rounded-lg transition-all"
+                          title="Chỉnh sửa báo cáo"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -315,6 +395,7 @@ export function EmployeePage() {
                     <td className="py-4 px-5"></td>
                     <td className="py-4 px-5 text-sm text-right font-extrabold text-green-700">{totalRevenueToday.toLocaleString('vi-VN')} ₫</td>
                     <td className="py-4 px-5 text-sm text-right font-extrabold text-orange-700">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</td>
+                    <td className="py-4 px-5"></td>
                     <td className="py-4 px-5"></td>
                   </tr>
                 </tfoot>

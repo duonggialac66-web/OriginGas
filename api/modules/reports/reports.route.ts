@@ -6,5 +6,6 @@ const router = Router();
 
 router.get('/', authenticateToken, reportsController.getReports);
 router.post('/', authenticateToken, reportsController.createReport);
+router.put('/:id', authenticateToken, reportsController.updateReport);
 
 export default router;

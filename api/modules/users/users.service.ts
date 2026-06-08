@@ -21,6 +21,7 @@ export class UsersService {
       phone: data.phone,
       startDate: data.startDate ? new Date(data.startDate) : new Date(),
       status: 'active',
+      baseSalary: Number(data.baseSalary) || 0,
     });
 
     const { password: _, ...employeeData } = newUser;
@@ -31,7 +32,8 @@ export class UsersService {
     const updated = await usersRepository.updateUser(id, {
       name: data.name,
       phone: data.phone,
-      status: data.status
+      status: data.status,
+      baseSalary: Number(data.baseSalary) || 0,
     });
     const { password: _, ...employeeData } = updated;
     return employeeData;

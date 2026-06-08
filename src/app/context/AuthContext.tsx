@@ -25,6 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('gasDeliveryUser', JSON.stringify(user));
     if (token) {
       localStorage.setItem('gasToken', token);
+      // Thông báo cho DataContext biết token đã được lưu → bắt đầu fetch data
+      window.dispatchEvent(new Event('gas:token-saved'));
     }
   };
 
