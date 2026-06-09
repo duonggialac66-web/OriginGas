@@ -54,10 +54,10 @@ export function EmployeePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const quantity = parseFloat(formData.quantity);
-    const unitPrice = parseFloat(formData.unitPrice);
+    const quantity = formData.quantity === '' ? 0 : parseFloat(formData.quantity);
+    const unitPrice = formData.unitPrice === '' ? 0 : parseFloat(formData.unitPrice);
     const total = quantity * unitPrice;
-    const actualReceived = parseFloat(formData.actualReceived);
+    const actualReceived = formData.actualReceived === '' ? 0 : parseFloat(formData.actualReceived);
 
     if (editingReportId) {
       const result = await updateDeliveryReport(editingReportId, {
@@ -224,9 +224,8 @@ export function EmployeePage() {
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
-                  placeholder="Số lượng bình"
-                  required
-                  min="1"
+                  placeholder="Số lượng bình (mặc định 0)"
+                  min="0"
                   step="1"
                 />
               </div>
@@ -262,8 +261,7 @@ export function EmployeePage() {
                   value={formData.unitPrice}
                   onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
                   className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
-                  placeholder="Đơn giá (VND)"
-                  required
+                  placeholder="Đơn giá (VND, mặc định 0)"
                   min="0"
                   step="1000"
                 />
@@ -292,8 +290,7 @@ export function EmployeePage() {
                   value={formData.actualReceived}
                   onChange={(e) => setFormData({ ...formData, actualReceived: e.target.value })}
                   className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
-                  placeholder="Số tiền thực nhận (VND)"
-                  required
+                  placeholder="Số tiền thực nhận (VND, mặc định 0)"
                   min="0"
                   step="1000"
                 />

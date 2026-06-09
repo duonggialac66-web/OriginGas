@@ -22,15 +22,16 @@ export class ReportsService {
   }
 
   async createReport(userId: string, data: any) {
-    const quantity = Number(data.quantity);
-    if (isNaN(quantity) || quantity <= 0) {
+    const quantity = Number(data.quantity) || 0;
+    if (isNaN(quantity) || quantity < 0) {
       throw new Error('Số lượng không hợp lệ');
     }
 
-    const inventory = await reportsRepository.getInventoryByType(data.containerType);
-
-    if (!inventory || inventory.fullQuantity < quantity) {
-      throw new Error(`Kho không đủ bình đầy cho loại ${data.containerType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
+    if (quantity > 0) {
+      const inventory = await reportsRepository.getInventoryByType(data.containerType);
+      if (!inventory || inventory.fullQuantity < quantity) {
+        throw new Error(`Kho không đủ bình đầy cho loại ${data.containerType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
+      }
     }
 
     const reportData = {
@@ -39,9 +40,9 @@ export class ReportsService {
       customerName: data.customerName,
       quantity,
       containerType: data.containerType,
-      unitPrice: Number(data.unitPrice),
-      total: Number(data.total),
-      actualReceived: Number(data.actualReceived),
+      unitPrice: Number(data.unitPrice) || 0,
+      total: Number(data.total) || 0,
+      actualReceived: Number(data.actualReceived) || 0,
       notes: data.notes || '',
     };
 
@@ -64,8 +65,8 @@ export class ReportsService {
       throw new Error('Bạn không có quyền chỉnh sửa báo cáo này');
     }
 
-    const quantity = Number(data.quantity);
-    if (isNaN(quantity) || quantity <= 0) {
+    const quantity = Number(data.quantity) || 0;
+    if (isNaN(quantity) || quantity < 0) {
       throw new Error('Số lượng không hợp lệ');
     }
 
@@ -107,9 +108,9 @@ export class ReportsService {
       customerName: data.customerName,
       quantity,
       containerType: newType,
-      unitPrice: Number(data.unitPrice),
-      total: Number(data.total),
-      actualReceived: Number(data.actualReceived),
+      unitPrice: Number(data.unitPrice) || 0,
+      total: Number(data.total) || 0,
+      actualReceived: Number(data.actualReceived) || 0,
       notes: data.notes || '',
       receiptUrl: data.receiptUrl || existingReport.receiptUrl,
     };
