@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { DeliveryReport, Employee, Inventory, SalaryConfig, CalculatedSalary, SalaryFormula } from '../types';
+import { DeliveryReport, Employee, Expense, Inventory, SalaryConfig, CalculatedSalary, SalaryFormula } from '../types';
 import { API_BASE_URL } from '../lib/api';
 
 interface DataContextType {
@@ -8,6 +8,7 @@ interface DataContextType {
   inventory: Inventory[];
   salaryConfigs: SalaryConfig[];
   salaryFormula: string;
+  expenses: Expense[];
   addDeliveryReport: (report: Omit<DeliveryReport, 'id' | 'createdAt'>) => Promise<{ success: boolean; message?: string }>;
   updateDeliveryReport: (id: string, report: Omit<DeliveryReport, 'id' | 'createdAt' | 'employeeId' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
@@ -19,6 +20,9 @@ interface DataContextType {
   getCalculatedSalaries: (month: string) => Promise<CalculatedSalary[]>;
   updateSalaryFormula: (formula: string) => Promise<void>;
   updateMonthlySalaryInput: (employeeId: string, month: string, overtime: number, workDays: number, bonus: number) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
+  updateExpense: (id: string, data: Pick<Expense, 'description' | 'amount' | 'notes'>) => Promise<{ success: boolean; message?: string }>;
+  deleteExpense: (id: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -31,6 +35,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [salaryConfigs, setSalaryConfigs] = useState<SalaryConfig[]>([]);
   const [salaryFormula, setSalaryFormula] = useState<string>('baseSalary * overtime');
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   const fetchAllData = (token: string) => {
     fetch(`${API_BASE_URL}/api/reports`, { headers: { Authorization: `Bearer ${token}` } })
@@ -51,6 +56,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     fetch(`${API_BASE_URL}/api/salary/formula`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json()).then(data => { if (data && data.formula) setSalaryFormula(data.formula); })
+      .catch(err => console.error(err));
+
+    fetch(`${API_BASE_URL}/api/expenses`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json()).then(data => { if (Array.isArray(data)) setExpenses(data); })
       .catch(err => console.error(err));
   };
 
@@ -351,6 +360,65 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 'employeeName'>): Promise<{ success: boolean; message?: string }> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(expense),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setExpenses(prev => [data, ...prev]);
+        return { success: true };
+      }
+      return { success: false, message: data.message };
+    } catch {
+      return { success: false, message: 'Lỗi mạng khi gọi server' };
+    }
+  };
+
+  const updateExpense = async (id: string, data: Pick<Expense, 'description' | 'amount' | 'notes'>): Promise<{ success: boolean; message?: string }> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/expenses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      const updated = await res.json();
+      if (res.ok) {
+        setExpenses(prev => prev.map(e => e.id === id ? updated : e));
+        return { success: true };
+      }
+      return { success: false, message: updated.message };
+    } catch {
+      return { success: false, message: 'Lỗi mạng khi gọi server' };
+    }
+  };
+
+  const deleteExpense = async (id: string): Promise<{ success: boolean; message?: string }> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/expenses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setExpenses(prev => prev.filter(e => e.id !== id));
+        return { success: true };
+      }
+      const err = await res.json();
+      return { success: false, message: err.message };
+    } catch {
+      return { success: false, message: 'Lỗi mạng khi gọi server' };
+    }
+  };
+
   return (
     <DataContext.Provider value={{
       deliveryReports,
@@ -358,6 +426,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       inventory,
       salaryConfigs,
       salaryFormula,
+      expenses,
       addDeliveryReport,
       updateDeliveryReport,
       addEmployee,
@@ -368,7 +437,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateSalaryConfig,
       getCalculatedSalaries,
       updateSalaryFormula,
-      updateMonthlySalaryInput
+      updateMonthlySalaryInput,
+      addExpense,
+      updateExpense,
+      deleteExpense,
     }}>
       {children}
     </DataContext.Provider>

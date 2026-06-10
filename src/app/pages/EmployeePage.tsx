@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useNavigate } from 'react-router';
-import { Flame, LogOut, Plus, FileText, TrendingUp, Pencil, X } from 'lucide-react';
+import { Flame, LogOut, Plus, FileText, TrendingUp, Pencil, X, Minus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function EmployeePage() {
   const { user, logout } = useAuth();
-  const { addDeliveryReport, updateDeliveryReport, deliveryReports, inventory } = useData();
+  const { addDeliveryReport, updateDeliveryReport, deliveryReports, inventory, expenses, addExpense, updateExpense, deleteExpense } = useData();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -20,6 +20,10 @@ export function EmployeePage() {
   });
 
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
+
+  // --- State cho form chi phí ---
+  const [expenseForm, setExpenseForm] = useState({ description: '', amount: '', notes: '' });
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const handleStartEdit = (report: any) => {
     setEditingReportId(report.id);
@@ -116,6 +120,42 @@ export function EmployeePage() {
   const totalDeliveredToday = myReportsToday.reduce((sum, report) => sum + report.quantity, 0);
   const totalRevenueToday = myReportsToday.reduce((sum, report) => sum + report.total, 0);
   const totalActualReceivedToday = myReportsToday.reduce((sum, report) => sum + report.actualReceived, 0);
+
+  // --- Chi phí hôm nay ---
+  const today = new Date().toISOString().split('T')[0];
+  const myExpensesToday = expenses.filter(e => e.employeeId === user!.id && e.date === today);
+  const totalExpenseToday = myExpensesToday.reduce((sum, e) => sum + e.amount, 0);
+  const netToday = totalActualReceivedToday - totalExpenseToday;
+
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expenseForm.description.trim()) { toast.error('Vui lòng nhập mô tả khoản chi'); return; }
+    const amount = parseFloat(expenseForm.amount);
+    if (isNaN(amount) || amount < 0) { toast.error('Số tiền chi không hợp lệ'); return; }
+
+    if (editingExpenseId) {
+      const res = await updateExpense(editingExpenseId, { description: expenseForm.description, amount, notes: expenseForm.notes });
+      if (!res.success) { toast.error(res.message || 'Lỗi cập nhật'); return; }
+      toast.success('Đã cập nhật khoản chi!');
+      setEditingExpenseId(null);
+    } else {
+      const res = await addExpense({ employeeId: user!.id, date: today, description: expenseForm.description, amount, notes: expenseForm.notes });
+      if (!res.success) { toast.error(res.message || 'Lỗi thêm khoản chi'); return; }
+      toast.success('Đã ghi nhận khoản chi!');
+    }
+    setExpenseForm({ description: '', amount: '', notes: '' });
+  };
+
+  const handleStartEditExpense = (exp: any) => {
+    setEditingExpenseId(exp.id);
+    setExpenseForm({ description: exp.description, amount: String(exp.amount), notes: exp.notes || '' });
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    const res = await deleteExpense(id);
+    if (!res.success) { toast.error(res.message || 'Lỗi xóa'); return; }
+    toast.success('Đã xóa khoản chi!');
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-hidden text-slate-200">
@@ -364,13 +404,13 @@ export function EmployeePage() {
                       index % 2 === 0 ? 'bg-blue-50/30' : 'bg-white'
                     } hover:bg-orange-50`}>
                       <td className="py-4 px-5 text-sm font-semibold text-gray-900">{report.customerName}</td>
-                      <td className="py-4 px-5 text-sm text-center font-bold text-blue-600">{report.quantity}</td>
+                      <td className="py-4 px-5 text-sm text-center font-bold text-gray-900">{report.quantity}</td>
                       <td className="py-4 px-5 text-sm text-gray-700">{report.containerType}</td>
                       <td className="py-4 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
-                      <td className="py-4 px-5 text-sm text-right font-bold text-green-600">
+                      <td className="py-4 px-5 text-sm text-right font-bold text-gray-900">
                         {report.total.toLocaleString('vi-VN')} ₫
                       </td>
-                      <td className="py-4 px-5 text-sm text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                      <td className="py-4 px-5 text-sm text-right font-semibold text-gray-900">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
                       <td className="py-4 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
                       <td className="py-4 px-5 text-sm text-center">
                         <button
@@ -385,19 +425,183 @@ export function EmployeePage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
-                    <td className="py-4 px-5 text-sm font-extrabold text-blue-800 text-center">Tổng</td>
-                    <td className="py-4 px-5 text-sm text-center font-extrabold text-blue-800">{totalDeliveredToday}</td>
+                  <tr className="bg-gray-50 border-t-2 border-gray-300">
+                    <td className="py-4 px-5 text-sm font-extrabold text-gray-900 text-center">Tổng</td>
+                    <td className="py-4 px-5 text-sm text-center font-extrabold text-gray-900">{totalDeliveredToday}</td>
                     <td className="py-4 px-5"></td>
                     <td className="py-4 px-5"></td>
-                    <td className="py-4 px-5 text-sm text-right font-extrabold text-green-700">{totalRevenueToday.toLocaleString('vi-VN')} ₫</td>
-                    <td className="py-4 px-5 text-sm text-right font-extrabold text-orange-700">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</td>
+                    <td className="py-4 px-5 text-sm text-right font-extrabold text-gray-900">{totalRevenueToday.toLocaleString('vi-VN')} ₫</td>
+                    <td className="py-4 px-5 text-sm text-right font-extrabold text-gray-900">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</td>
                     <td className="py-4 px-5"></td>
                     <td className="py-4 px-5"></td>
                   </tr>
                 </tfoot>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* === FORM CHI PHÍ === */}
+        <div className="mt-8 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+          <div className="flex items-center gap-4 mb-6">
+            <div className={`w-14 h-14 bg-gradient-to-br ${editingExpenseId ? 'from-blue-500 to-indigo-600' : 'from-slate-600 to-slate-800'} rounded-2xl flex items-center justify-center shadow-lg`}>
+              {editingExpenseId ? <Pencil className="w-7 h-7 text-white" /> : <Minus className="w-7 h-7 text-white" />}
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold text-gray-900">{editingExpenseId ? 'Sửa khoản chi' : 'Ghi nhận chi phí'}</h2>
+              <p className="text-sm text-gray-500 mt-1">📅 Ngày: {new Date().toLocaleDateString('vi-VN')}</p>
+            </div>
+          </div>
+          <form onSubmit={handleExpenseSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Mô tả khoản chi</label>
+                <input type="text" value={expenseForm.description} onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                  className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all shadow-sm"
+                  placeholder="VD: Tiền xăng, phí cầu đường..." required />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Số tiền chi (₫)</label>
+                <input type="number" value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                  className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all shadow-sm"
+                  placeholder="Số tiền (VND)" min="0" step="1000" required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-2">Ghi chú</label>
+              <input type="text" value={expenseForm.notes} onChange={e => setExpenseForm({ ...expenseForm, notes: e.target.value })}
+                className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all shadow-sm"
+                placeholder="Ghi chú thêm (nếu có)" />
+            </div>
+            <div className="flex gap-4">
+              {editingExpenseId && (
+                <button type="button" onClick={() => { setEditingExpenseId(null); setExpenseForm({ description: '', amount: '', notes: '' }); }}
+                  className="w-1/3 bg-gray-500 text-white py-3.5 rounded-xl font-bold hover:bg-gray-600 transition-all flex items-center justify-center gap-2">
+                  <X className="w-5 h-5" /> Hủy
+                </button>
+              )}
+              <button type="submit"
+                className={`${editingExpenseId ? 'w-2/3 bg-gradient-to-r from-blue-500 to-indigo-600' : 'w-full bg-gradient-to-r from-slate-600 to-slate-800'} text-white py-3.5 rounded-xl font-bold text-base transition-all shadow-lg hover:scale-[1.01] flex items-center justify-center gap-2`}>
+                {editingExpenseId ? <><Pencil className="w-5 h-5" /> Cập nhật khoản chi</> : <><Plus className="w-5 h-5" /> Ghi nhận khoản chi</>}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* === BẢNG TỔNG HỢP THU / CHI === */}
+        {(myReportsToday.length > 0 || myExpensesToday.length > 0) && (
+          <div className="mt-8 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <h3 className="text-2xl font-extrabold text-gray-900 mb-6">📊 Tổng hợp Thu – Chi hôm nay</h3>
+
+            {/* Thẻ tổng quan */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="flex items-center gap-4 bg-gray-50 rounded-2xl p-5 border border-gray-200">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <ArrowUpCircle className="w-6 h-6 text-gray-700" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Tổng thu</div>
+                  <div className="text-xl font-extrabold text-gray-900">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 bg-gray-50 rounded-2xl p-5 border border-gray-200">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <ArrowDownCircle className="w-6 h-6 text-gray-700" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Tổng chi</div>
+                  <div className="text-xl font-extrabold text-gray-900">{totalExpenseToday.toLocaleString('vi-VN')} ₫</div>
+                </div>
+              </div>
+              <div className={`flex items-center gap-4 rounded-2xl p-5 border-2 ${netToday >= 0 ? 'bg-gray-50 border-gray-300' : 'bg-gray-50 border-gray-300'}`}>
+                <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-gray-800" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Còn lại (nộp về)</div>
+                  <div className="text-xl font-extrabold text-gray-900">{netToday.toLocaleString('vi-VN')} ₫</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bảng chi tiết THU */}
+            {myReportsToday.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2"><ArrowUpCircle className="w-4 h-4" /> Các khoản THU</h4>
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="text-left py-3 px-4 font-bold text-gray-700">Khách hàng</th>
+                        <th className="text-center py-3 px-4 font-bold text-gray-700">SL</th>
+                        <th className="text-left py-3 px-4 font-bold text-gray-700">Loại bình</th>
+                        <th className="text-right py-3 px-4 font-bold text-gray-700">Thành tiền</th>
+                        <th className="text-right py-3 px-4 font-bold text-gray-700">Thực nhận</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {myReportsToday.map((r, i) => (
+                        <tr key={r.id} className={`border-t border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                          <td className="py-3 px-4 font-semibold text-gray-900">{r.customerName}</td>
+                          <td className="py-3 px-4 text-center text-gray-900">{r.quantity}</td>
+                          <td className="py-3 px-4 text-gray-700">{r.containerType}</td>
+                          <td className="py-3 px-4 text-right text-gray-900">{r.total.toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-3 px-4 text-right font-semibold text-gray-900">{r.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-100 border-t-2 border-gray-300">
+                        <td colSpan={3} className="py-3 px-4 font-extrabold text-gray-900">Tổng thu</td>
+                        <td className="py-3 px-4 text-right font-extrabold text-gray-900">{totalRevenueToday.toLocaleString('vi-VN')} ₫</td>
+                        <td className="py-3 px-4 text-right font-extrabold text-gray-900">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Bảng chi tiết CHI */}
+            {myExpensesToday.length > 0 && (
+              <div>
+                <h4 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2"><ArrowDownCircle className="w-4 h-4" /> Các khoản CHI</h4>
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="text-left py-3 px-4 font-bold text-gray-700">Mô tả</th>
+                        <th className="text-right py-3 px-4 font-bold text-gray-700">Số tiền</th>
+                        <th className="text-left py-3 px-4 font-bold text-gray-700">Ghi chú</th>
+                        <th className="text-center py-3 px-4 font-bold text-gray-700 w-24">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {myExpensesToday.map((exp, i) => (
+                        <tr key={exp.id} className={`border-t border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                          <td className="py-3 px-4 font-semibold text-gray-900">{exp.description}</td>
+                          <td className="py-3 px-4 text-right text-gray-900">{exp.amount.toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-3 px-4 text-gray-600">{exp.notes || '-'}</td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => handleStartEditExpense(exp)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-all" title="Sửa"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteExpense(exp.id)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-all" title="Xóa"><X className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-100 border-t-2 border-gray-300">
+                        <td className="py-3 px-4 font-extrabold text-gray-900">Tổng chi</td>
+                        <td className="py-3 px-4 text-right font-extrabold text-gray-900">{totalExpenseToday.toLocaleString('vi-VN')} ₫</td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
         </div>

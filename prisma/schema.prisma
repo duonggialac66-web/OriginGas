@@ -10,6 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -27,6 +28,7 @@ model User {
   updatedAt   DateTime @updatedAt
 
   reports     DeliveryReport[]
+  expenses    Expense[]
 }
 
 model DeliveryReport {
@@ -77,4 +79,16 @@ model MonthlySalaryInput {
   updatedAt        DateTime @updatedAt
 
   @@unique([employeeId, month])
+}
+
+model Expense {
+  id           String   @id @default(uuid())
+  employeeId   String
+  employee     User     @relation(fields: [employeeId], references: [id])
+  date         String   // YYYY-MM-DD
+  description  String   // Mô tả khoản chi
+  amount       Float    // Số tiền chi
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

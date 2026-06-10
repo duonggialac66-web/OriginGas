@@ -7,6 +7,7 @@ import employeeRoutes from './modules/users/users.route.js';
 import reportRoutes from './modules/reports/reports.route.js';
 import inventoryRoutes from './modules/inventory/inventory.route.js';
 import salaryRoutes from './modules/salary/salary.route.js';
+import expenseRoutes from './modules/expenses/expenses.route.js';
 
 const app = express();
 app.use(cors());
@@ -23,6 +24,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/salary', salaryRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // Chỉ chạy static file serving nếu không phải trên Vercel
 if (!process.env.VERCEL) {

@@ -20,6 +20,17 @@ export interface DeliveryReport {
   createdAt: string;
 }
 
+export interface Expense {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  description: string;
+  amount: number;
+  notes: string;
+  createdAt: string;
+}
+
 export interface Employee {
   id: string;
   name: string;
