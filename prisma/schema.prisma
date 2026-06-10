@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "client"
 }
 
@@ -14,36 +14,36 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  username    String   @unique
-  password    String?  // Nếu có chức năng login thực tế
-  role        String   @default("employee") // "admin" | "employee"
-  phone       String?
-  startDate   DateTime?
-  status      String   @default("active") // "active" | "inactive"
-  baseSalary  Float    @default(0) // Lương cơ bản
-  avatarUrl   String?  // Dùng cho Cloudinary (ảnh đại diện)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(uuid())
+  name       String
+  username   String    @unique
+  password   String? // Nếu có chức năng login thực tế
+  role       String    @default("employee") // "admin" | "employee"
+  phone      String?
+  startDate  DateTime?
+  status     String    @default("active") // "active" | "inactive"
+  baseSalary Float     @default(0) // Lương cơ bản
+  avatarUrl  String? // Dùng cho Cloudinary (ảnh đại diện)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  reports     DeliveryReport[]
-  expenses    Expense[]
+  reports  DeliveryReport[]
+  expenses Expense[]
 }
 
 model DeliveryReport {
   id             String   @id @default(uuid())
   employeeId     String
   employee       User     @relation(fields: [employeeId], references: [id])
-  date           String   // Lưu ngày dạng "YYYY-MM-DD"
+  date           String // Lưu ngày dạng "YYYY-MM-DD"
   customerName   String
-  quantity       Int      // Số lượng bình đầy giao cho khách
+  quantity       Int // Số lượng bình đầy giao cho khách
   containerType  String
   unitPrice      Float
   total          Float
   actualReceived Float
   notes          String?
-  receiptUrl     String?  // Dùng cho Cloudinary (ảnh hóa đơn/biên nhận)
+  receiptUrl     String? // Dùng cho Cloudinary (ảnh hóa đơn/biên nhận)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -71,7 +71,7 @@ model SalaryFormula {
 model MonthlySalaryInput {
   id               String   @id @default(uuid())
   employeeId       String
-  month            String   // YYYY-MM
+  month            String // YYYY-MM
   overtime         Float    @default(1.0)
   workDays         Float    @default(26.0)
   bonus            Float    @default(0.0)
@@ -82,13 +82,13 @@ model MonthlySalaryInput {
 }
 
 model Expense {
-  id           String   @id @default(uuid())
-  employeeId   String
-  employee     User     @relation(fields: [employeeId], references: [id])
-  date         String   // YYYY-MM-DD
-  description  String   // Mô tả khoản chi
-  amount       Float    // Số tiền chi
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    User     @relation(fields: [employeeId], references: [id])
+  date        String // YYYY-MM-DD
+  description String // Mô tả khoản chi
+  amount      Float // Số tiền chi
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
