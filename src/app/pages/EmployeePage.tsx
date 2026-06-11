@@ -554,7 +554,9 @@ export function EmployeePage() {
                     </tbody>
                     <tfoot>
                       <tr className="bg-gray-100 border-t-2 border-gray-300">
-                        <td colSpan={3} className="py-3 px-4 font-extrabold text-gray-900">Tổng thu</td>
+                        <td className="py-3 px-4 font-extrabold text-gray-900">Tổng</td>
+                        <td className="py-3 px-4 text-center font-extrabold text-gray-900">{totalDeliveredToday}</td>
+                        <td className="py-3 px-4"></td>
                         <td className="py-3 px-4 text-right font-extrabold text-gray-900">{totalRevenueToday.toLocaleString('vi-VN')} ₫</td>
                         <td className="py-3 px-4 text-right font-extrabold text-gray-900">{totalActualReceivedToday.toLocaleString('vi-VN')} ₫</td>
                         <td className="py-3 px-4"></td>
