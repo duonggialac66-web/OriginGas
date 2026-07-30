@@ -27,7 +27,7 @@ export class ReportsService {
       throw new Error('Số lượng không hợp lệ');
     }
 
-    if (quantity > 0) {
+    if (quantity > 0 && data.containerType !== 'Gas lon') {
       const inventory = await reportsRepository.getInventoryByType(data.containerType);
       if (!inventory || inventory.fullQuantity < quantity) {
         throw new Error(`Kho không đủ bình đầy cho loại ${data.containerType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
@@ -79,7 +79,7 @@ export class ReportsService {
 
     if (oldType === newType) {
       const diff = newQty - oldQty; // Nếu newQty > oldQty, diff > 0, cần bớt đi trong kho
-      if (diff !== 0) {
+      if (diff !== 0 && newType !== 'Gas lon') {
         if (diff > 0) {
           // Cần lấy thêm từ kho
           const inventory = await reportsRepository.getInventoryByType(newType);
@@ -92,15 +92,17 @@ export class ReportsService {
       }
     } else {
       // Khác loại: trả lại số lượng cũ cho loại cũ, trừ số lượng mới từ loại mới
-      const oldInventory = await reportsRepository.getInventoryByType(oldType);
-      const newInventory = await reportsRepository.getInventoryByType(newType);
-
-      if (!newInventory || newInventory.fullQuantity < newQty) {
-        throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${newInventory ? newInventory.fullQuantity : 0}`);
+      if (oldType !== 'Gas lon') {
+        inventoryUpdates.push({ containerType: oldType, change: oldQty });
       }
 
-      inventoryUpdates.push({ containerType: oldType, change: oldQty });
-      inventoryUpdates.push({ containerType: newType, change: -newQty });
+      if (newType !== 'Gas lon') {
+        const newInventory = await reportsRepository.getInventoryByType(newType);
+        if (!newInventory || newInventory.fullQuantity < newQty) {
+          throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${newInventory ? newInventory.fullQuantity : 0}`);
+        }
+        inventoryUpdates.push({ containerType: newType, change: -newQty });
+      }
     }
 
     const reportData = {
@@ -121,6 +123,20 @@ export class ReportsService {
       ...updatedReport,
       employeeName: updatedReport.employee.name
     };
+  }
+
+  async deleteReport(id: string, userId: string, userRole: string) {
+    const existingReport = await reportsRepository.findById(id);
+    if (!existingReport) {
+      throw new Error('Không tìm thấy báo cáo');
+    }
+
+    if (userRole === 'employee' && existingReport.employeeId !== userId) {
+      throw new Error('Bạn không có quyền xóa báo cáo này');
+    }
+
+    await reportsRepository.deleteReportTransaction(id, existingReport.containerType, existingReport.quantity);
+    return { success: true };
   }
 }
 

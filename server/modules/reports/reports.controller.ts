@@ -48,6 +48,20 @@ export class ReportsController {
       }
     }
   }
+
+  async deleteReport(req: any, res: any) {
+    try {
+      await reportsService.deleteReport(req.params.id, req.user?.id, req.user?.role);
+      res.json({ success: true, message: 'Đã xóa báo cáo' });
+    } catch (error: any) {
+      if (error.message === 'Không tìm thấy báo cáo' || error.message === 'Bạn không có quyền xóa báo cáo này') {
+        res.status(400).json({ message: error.message });
+      } else {
+        console.error('Lỗi xóa báo cáo:', error);
+        res.status(500).json({ message: 'Lỗi khi xóa báo cáo' });
+      }
+    }
+  }
 }
 
 export const reportsController = new ReportsController();

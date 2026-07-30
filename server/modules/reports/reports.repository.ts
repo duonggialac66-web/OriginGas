@@ -16,6 +16,15 @@ export class ReportsRepository {
   }
 
   async createReportTransaction(reportData: any) {
+    if (reportData.containerType === 'Gas lon') {
+      return prisma.$transaction([
+        prisma.deliveryReport.create({
+          data: reportData,
+          include: { employee: true }
+        })
+      ]);
+    }
+
     return prisma.$transaction([
       prisma.deliveryReport.create({
         data: reportData,
@@ -58,6 +67,28 @@ export class ReportsRepository {
     }
 
     return prisma.$transaction(transactionOperations);
+  }
+
+  async deleteReportTransaction(id: string, containerType: string, quantityToRestore: number) {
+    if (containerType === 'Gas lon') {
+      return prisma.$transaction([
+        prisma.deliveryReport.delete({
+          where: { id }
+        })
+      ]);
+    }
+
+    return prisma.$transaction([
+      prisma.deliveryReport.delete({
+        where: { id }
+      }),
+      prisma.inventory.update({
+        where: { containerType },
+        data: {
+          fullQuantity: { increment: quantityToRestore }
+        }
+      })
+    ]);
   }
 }
 

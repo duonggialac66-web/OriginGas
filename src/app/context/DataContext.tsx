@@ -11,6 +11,7 @@ interface DataContextType {
   expenses: Expense[];
   addDeliveryReport: (report: Omit<DeliveryReport, 'id' | 'createdAt'>) => Promise<{ success: boolean; message?: string }>;
   updateDeliveryReport: (id: string, report: Omit<DeliveryReport, 'id' | 'createdAt' | 'employeeId' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
+  deleteDeliveryReport: (id: string) => Promise<{ success: boolean; message?: string }>;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
@@ -142,6 +143,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       return { success: false, message: 'Lỗi mạng khi gọi server' };
+    }
+  };
+
+  const deleteDeliveryReport = async (id: string) => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDeliveryReports(prev => prev.filter(r => r.id !== id));
+        fetchAllData(token);
+        return { success: true };
+      }
+      return { success: false, message: data.message };
+    } catch (error: any) {
+      return { success: false, message: 'Không thể kết nối đến server' };
     }
   };
 
@@ -429,6 +451,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       expenses,
       addDeliveryReport,
       updateDeliveryReport,
+      deleteDeliveryReport,
       addEmployee,
       updateEmployee,
       deleteEmployee,
