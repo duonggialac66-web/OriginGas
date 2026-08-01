@@ -234,19 +234,30 @@ export function AdminPage() {
   const todayReports = deliveryReports.filter(report => report.date === today);
 
   const totalRevenue = todayReports.reduce((sum, report) => sum + report.total, 0);
-  const totalDeliveries = todayReports.length;
-  const totalQuantity = todayReports.reduce((sum, report) => sum + report.quantity, 0);
+  const gasReportsToday = todayReports.filter(r => r.containerType !== 'Gas lon');
+  const cannedReportsToday = todayReports.filter(r => r.containerType === 'Gas lon');
+  
+  const totalDeliveries = gasReportsToday.length;
+  const totalQuantity = gasReportsToday.reduce((sum, report) => sum + report.quantity, 0);
+  const totalCannedQuantity = cannedReportsToday.reduce((sum, report) => sum + report.quantity, 0);
+  
   const activeEmployees = employees.filter(emp => emp.status === 'active').length;
 
   const employeeStats = employees.map(employee => {
     const employeeReports = todayReports.filter(r => r.employeeId === employee.id);
+    const empGasReports = employeeReports.filter(r => r.containerType !== 'Gas lon');
+    const empCannedReports = employeeReports.filter(r => r.containerType === 'Gas lon');
+    
     const revenue = employeeReports.reduce((sum, r) => sum + r.total, 0);
-    const quantity = employeeReports.reduce((sum, r) => sum + r.quantity, 0);
+    const quantity = empGasReports.reduce((sum, r) => sum + r.quantity, 0);
+    const cannedQuantity = empCannedReports.reduce((sum, r) => sum + r.quantity, 0);
+    
     return {
       ...employee,
-      todayDeliveries: employeeReports.length,
+      todayDeliveries: empGasReports.length,
       todayRevenue: revenue,
       todayQuantity: quantity,
+      todayCannedQuantity: cannedQuantity,
     };
   }).sort((a, b) => b.todayRevenue - a.todayRevenue);
 
@@ -269,10 +280,15 @@ export function AdminPage() {
 
   const groupedReports = employees.map(emp => {
     const empReports = filteredReports.filter(r => r.employeeId === emp.id);
+    const gasReports = empReports.filter(r => r.containerType !== 'Gas lon');
+    const cannedReports = empReports.filter(r => r.containerType === 'Gas lon');
     return {
       employee: emp,
       reports: empReports,
-      totalQuantity: empReports.reduce((sum, r) => sum + r.quantity, 0),
+      gasReports,
+      cannedReports,
+      totalQuantity: gasReports.reduce((sum, r) => sum + r.quantity, 0),
+      totalCannedQuantity: cannedReports.reduce((sum, r) => sum + r.quantity, 0),
       totalRevenue: empReports.reduce((sum, r) => sum + r.total, 0),
       totalReceived: empReports.reduce((sum, r) => sum + r.actualReceived, 0),
     };
@@ -291,16 +307,16 @@ export function AdminPage() {
             <div className="flex justify-between items-center h-20">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.3)]">
-                  <Flame className="w-8 h-8 text-white" />
+                  <Flame className="w-8 h-8 text-gray-100" />
                 </div>
                 <div>
-                  <div className="font-bold text-xl text-white">Admin Dashboard</div>
+                  <div className="font-bold text-xl text-gray-100">Admin Dashboard</div>
                   <div className="text-sm text-slate-400 font-medium">{user?.name}</div>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-5 py-2.5 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all font-semibold border-2 border-transparent hover:border-red-500/30"
+                className="flex items-center gap-2 px-5 py-2.5 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all font-extrabold border-2 border-transparent hover:border-red-500/30"
               >
                 <LogOut className="w-5 h-5" />
                 Đăng xuất
@@ -315,8 +331,8 @@ export function AdminPage() {
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
               activeTab === 'overview'
-                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 bg-gray-50'
             }`}
           >
             <LayoutDashboard className="w-6 h-6" />
@@ -326,8 +342,8 @@ export function AdminPage() {
             onClick={() => setActiveTab('employees')}
             className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
               activeTab === 'employees'
-                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 bg-gray-50'
             }`}
           >
             <Users className="w-6 h-6" />
@@ -337,8 +353,8 @@ export function AdminPage() {
             onClick={() => setActiveTab('reports')}
             className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
               activeTab === 'reports'
-                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 bg-gray-50'
             }`}
           >
             <FileText className="w-6 h-6" />
@@ -348,8 +364,8 @@ export function AdminPage() {
             onClick={() => setActiveTab('inventory')}
             className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
               activeTab === 'inventory'
-                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 bg-gray-50'
             }`}
           >
             <Database className="w-6 h-6" />
@@ -359,8 +375,8 @@ export function AdminPage() {
             onClick={() => setActiveTab('salary')}
             className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap shadow-lg hover-lift ${
               activeTab === 'salary'
-                ? 'bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 bg-gray-50'
             }`}
           >
             <DollarSign className="w-6 h-6" />
@@ -371,52 +387,52 @@ export function AdminPage() {
         {activeTab === 'overview' && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-orange-500 via-red-500 to-red-700 rounded-2xl p-7 text-white shadow-2xl hover-lift border border-orange-400/20">
+              <div className="bg-gradient-to-br from-orange-500 via-red-500 to-red-700 rounded-2xl p-7 text-gray-100 shadow-lg border border-gray-100 hover-lift border border-orange-400/20">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-16 h-16 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
                     <DollarSign className="w-8 h-8" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold opacity-95">Doanh thu hôm nay</div>
+                    <div className="text-sm font-extrabold opacity-95">Doanh thu hôm nay</div>
                     <div className="text-4xl font-extrabold tracking-tight">{(totalRevenue / 1000000).toFixed(1)}M</div>
                   </div>
                 </div>
                 <div className="text-xs opacity-80 mt-2">Triệu đồng</div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-7 text-white shadow-2xl hover-lift border border-blue-400/20">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-7 text-gray-100 shadow-lg border border-gray-100 hover-lift border border-blue-400/20">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-16 h-16 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
                     <FileText className="w-8 h-8" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold opacity-95">Đơn hàng hôm nay</div>
+                    <div className="text-sm font-extrabold opacity-95">Đơn hàng hôm nay</div>
                     <div className="text-4xl font-extrabold tracking-tight">{totalDeliveries}</div>
                   </div>
                 </div>
-                <div className="text-xs opacity-80 mt-2">Đơn hàng đã giao</div>
+                <div className="text-xs opacity-80 mt-2">Đơn hàng Gas lớn</div>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-500 to-green-700 rounded-2xl p-7 text-white shadow-2xl hover-lift border border-emerald-400/20">
+              <div className="bg-gradient-to-br from-emerald-500 to-green-700 rounded-2xl p-7 text-gray-100 shadow-lg border border-gray-100 hover-lift border border-emerald-400/20">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-16 h-16 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
                     <Package className="w-8 h-8" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold opacity-95">Tổng số bình</div>
+                    <div className="text-sm font-extrabold opacity-95">Tổng số bình</div>
                     <div className="text-4xl font-extrabold tracking-tight">{totalQuantity}</div>
                   </div>
                 </div>
-                <div className="text-xs opacity-80 mt-2">Bình gas đã giao</div>
+                <div className="text-xs opacity-80 mt-2">Bình Gas lớn đã giao (+ {totalCannedQuantity} lon)</div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-7 text-white shadow-2xl hover-lift border border-purple-400/20">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-7 text-gray-100 shadow-lg border border-gray-100 hover-lift border border-purple-400/20">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-16 h-16 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
                     <Users className="w-8 h-8" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold opacity-95">NV đang làm</div>
+                    <div className="text-sm font-extrabold opacity-95">NV đang làm</div>
                     <div className="text-4xl font-extrabold tracking-tight">{activeEmployees}</div>
                   </div>
                 </div>
@@ -424,20 +440,20 @@ export function AdminPage() {
               </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-7 h-7 text-white" />
+                  <TrendingUp className="w-7 h-7 text-gray-100" />
                 </div>
-                <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-extrabold text-gray-900">
                   Hiệu suất nhân viên hôm nay
                 </h2>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border-2 border-gray-200 shadow-lg">
+              <div className="overflow-x-auto rounded-2xl border-2 border-gray-200 bg-gray-50 shadow-lg">
                 <table className="w-full">
                   <thead>
-                    <tr className="table-header-gas">
+                    <tr className="bg-gradient-to-r from-blue-100 to-blue-50 text-gray-500 border-b border-gray-200">
                       <th className="text-center py-5 px-5 text-sm font-bold">Xếp hạng</th>
                       <th className="text-left py-5 px-5 text-sm font-bold">Nhân viên</th>
                       <th className="text-center py-5 px-5 text-sm font-bold">Số đơn</th>
@@ -453,9 +469,9 @@ export function AdminPage() {
                       } hover:bg-orange-50`}>
                         <td className="py-5 px-5 text-center">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base mx-auto shadow-md ${
-                            index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' :
-                            index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white' :
-                            index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white' :
+                            index === 0 ? 'bg-gray-100 text-gray-900 text-gray-100' :
+                            index === 1 ? 'bg-gray-100 text-gray-900 text-gray-100' :
+                            index === 2 ? 'bg-gray-100 text-gray-900 text-gray-100' :
                             'bg-blue-100 text-blue-700'
                           }`}>
                             {index + 1}
@@ -466,12 +482,14 @@ export function AdminPage() {
                           <div className="text-sm text-gray-600 mt-0.5">{employee.phone}</div>
                         </td>
                         <td className="py-5 px-5 text-center text-sm font-bold text-blue-600">{employee.todayDeliveries}</td>
-                        <td className="py-5 px-5 text-center text-sm font-semibold text-gray-700">{employee.todayQuantity}</td>
+                        <td className="py-5 px-5 text-center text-sm font-extrabold text-gray-700">
+                          {employee.todayQuantity} bình {employee.todayCannedQuantity > 0 && <span className="text-teal-600 block text-xs">(+ {employee.todayCannedQuantity} lon)</span>}
+                        </td>
                         <td className="py-5 px-5 text-right text-sm font-bold text-green-600">
                           {employee.todayRevenue.toLocaleString('vi-VN')} ₫
                         </td>
                         <td className="py-5 px-5 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold shadow-sm ${
+                          <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold shadow-lg ${
                             employee.status === 'active'
                               ? 'bg-green-100 text-green-700 border border-green-300'
                               : 'bg-gray-100 text-gray-600 border border-gray-300'
@@ -503,7 +521,7 @@ export function AdminPage() {
             <div className="flex justify-between items-center flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Users className="w-8 h-8 text-white" />
+                  <Users className="w-8 h-8 text-gray-100" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -514,7 +532,7 @@ export function AdminPage() {
               </div>
               <button
                 onClick={() => setShowAddEmployee(!showAddEmployee)}
-                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white rounded-2xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-red-700 shadow-2xl hover-lift transition-all"
+                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 rounded-2xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-red-700 shadow-lg border border-gray-100 hover-lift transition-all"
               >
                 <UserPlus className="w-6 h-6" />
                 Thêm nhân viên
@@ -522,7 +540,7 @@ export function AdminPage() {
             </div>
 
             {showAddEmployee && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100 animate-fade-in">
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100 animate-fade-in">
                 <h3 className="text-2xl font-extrabold text-gray-900 mb-6">
                   {editingEmployeeId ? '✏️ Cập nhật thông tin nhân viên' : '✨ Thêm nhân viên mới'}
                 </h3>
@@ -534,7 +552,7 @@ export function AdminPage() {
                         type="text"
                         value={newEmployee.name}
                         onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                         required
                       />
                     </div>
@@ -544,7 +562,7 @@ export function AdminPage() {
                         type="text"
                         value={newEmployee.username}
                         onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                         required
                         disabled={!!editingEmployeeId}
                       />
@@ -556,7 +574,7 @@ export function AdminPage() {
                           type="password"
                           value={newEmployee.password}
                           onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-                          className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                          className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                           required
                         />
                       </div>
@@ -567,7 +585,7 @@ export function AdminPage() {
                         type="tel"
                         value={newEmployee.phone}
                         onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                         required
                       />
                     </div>
@@ -579,7 +597,7 @@ export function AdminPage() {
                         step="50000"
                         value={newEmployee.baseSalary}
                         onChange={(e) => setNewEmployee({ ...newEmployee, baseSalary: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                         required
                         placeholder="VD: 5000000"
                       />
@@ -590,7 +608,7 @@ export function AdminPage() {
                         type="date"
                         value={newEmployee.startDate}
                         onChange={(e) => setNewEmployee({ ...newEmployee, startDate: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-lg hover:border-gray-300"
                         required
                       />
                     </div>
@@ -598,7 +616,7 @@ export function AdminPage() {
                   <div className="flex gap-4 pt-2">
                     <button
                       type="submit"
-                      className="flex-1 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white py-4 rounded-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-red-700 transition-all shadow-xl hover:scale-[1.02]"
+                      className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:bg-black text-gray-100 py-4 rounded-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-red-700 transition-all shadow-xl hover:scale-[1.02]"
                     >
                       {editingEmployeeId ? 'Cập nhật nhân viên' : 'Thêm nhân viên'}
                     </button>
@@ -630,10 +648,10 @@ export function AdminPage() {
               {employees.map((employee) => (
                 <div key={employee.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-7 hover-lift transition-all border border-gray-100">
                   <div className="flex justify-between items-start mb-5">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 via-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl shadow-lg">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 via-red-500 to-red-600 rounded-2xl flex items-center justify-center text-gray-100 font-extrabold text-2xl shadow-lg">
                       {employee.name.charAt(0)}
                     </div>
-                    <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold shadow-sm ${
+                    <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold shadow-lg ${
                       employee.status === 'active'
                         ? 'bg-green-100 text-green-700 border border-green-300'
                         : 'bg-gray-100 text-gray-600 border border-gray-300'
@@ -649,7 +667,7 @@ export function AdminPage() {
                     💵 Lương cơ bản: {(employee.baseSalary || 0).toLocaleString('vi-VN')} ₫
                   </p>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-5 font-semibold bg-gray-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-5 font-extrabold bg-gray-50 px-3 py-2 rounded-lg">
                     <Calendar className="w-4 h-4 text-orange-500" />
                     Từ {new Date(employee.startDate).toLocaleDateString('vi-VN')}
                   </div>
@@ -657,7 +675,7 @@ export function AdminPage() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleToggleStatus(employee.id, employee.status)}
-                      className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-sm font-bold shadow-lg hover:scale-[1.02]"
+                      className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-gray-100 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-sm font-bold shadow-lg hover:scale-[1.02]"
                     >
                       {employee.status === 'active' ? 'Tạm nghỉ' : 'Kích hoạt'}
                     </button>
@@ -685,10 +703,10 @@ export function AdminPage() {
         {activeTab === 'reports' && (
           <div className="space-y-6">
             {/* Header + Bộ lọc */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 border border-gray-100">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-                  <Filter className="w-6 h-6 text-white" />
+                  <Filter className="w-6 h-6 text-gray-100" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Bộ lọc báo cáo</h2>
@@ -700,18 +718,18 @@ export function AdminPage() {
                   <label className="block text-xs font-bold text-gray-600 mb-1.5">Từ ngày</label>
                   <input type="date" value={filterDateFrom}
                     onChange={e => setFilterDateFrom(e.target.value)}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 bg-gray-50 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1.5">Đến ngày</label>
                   <input type="date" value={filterDateTo}
                     onChange={e => setFilterDateTo(e.target.value)}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 bg-gray-50 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1.5">Nhân viên</label>
                   <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 bg-gray-50 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
                     <option value="">Tất cả nhân viên</option>
                     {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
                   </select>
@@ -719,7 +737,7 @@ export function AdminPage() {
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1.5">Loại bình</label>
                   <select value={filterContainer} onChange={e => setFilterContainer(e.target.value)}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 bg-gray-50 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-500 transition-all bg-white">
                     <option value="">Tất cả loại bình</option>
                     {containerTypes.map(ct => <option key={ct} value={ct}>{ct}</option>)}
                   </select>
@@ -727,7 +745,7 @@ export function AdminPage() {
               </div>
               {hasActiveFilter && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-sm text-blue-600 font-semibold">🔍 Đang lọc — {filteredReports.length} báo cáo</p>
+                  <p className="text-sm text-blue-600 font-extrabold">🔍 Đang lọc — {filteredReports.length} báo cáo</p>
                   <button onClick={() => { setFilterDateFrom(todayStr); setFilterDateTo(todayStr); setFilterEmployee(''); setFilterContainer(''); }}
                     className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 font-bold transition-all">
                     <X className="w-3.5 h-3.5" /> Về hôm nay
@@ -738,25 +756,25 @@ export function AdminPage() {
 
             {/* Thống kê tổng */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
-                <div className="text-xs font-semibold opacity-80 mb-1">Tổng doanh thu</div>
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-3 sm:p-5 text-gray-100 shadow-xl">
+                <div className="text-xs font-extrabold opacity-80 mb-1">Tổng doanh thu</div>
                 <div className="text-base sm:text-2xl font-extrabold">{(filteredRevenue / 1000000).toFixed(2)}M ₫</div>
               </div>
-              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
-                <div className="text-xs font-semibold opacity-80 mb-1">Số đơn hàng</div>
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 sm:p-5 text-gray-100 shadow-xl">
+                <div className="text-xs font-extrabold opacity-80 mb-1">Số đơn hàng</div>
                 <div className="text-base sm:text-2xl font-extrabold">{filteredReports.length}</div>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-3 sm:p-5 text-white shadow-xl">
-                <div className="text-xs font-semibold opacity-80 mb-1">Tổng số bình</div>
+              <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-3 sm:p-5 text-gray-100 shadow-xl">
+                <div className="text-xs font-extrabold opacity-80 mb-1">Tổng số bình</div>
                 <div className="text-base sm:text-2xl font-extrabold">{filteredQuantity}</div>
               </div>
             </div>
 
             {/* Bảng kết quả */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-white" />
+                  <FileText className="w-5 h-5 text-gray-100" />
                 </div>
                 <h3 className="text-xl font-extrabold text-gray-900">Danh sách báo cáo</h3>
               </div>
@@ -769,9 +787,9 @@ export function AdminPage() {
               ) : (
                 <div className="space-y-8">
                   {groupedReports.map((group) => (
-                    <div key={group.employee.id} className="bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden animate-fade-in">
+                    <div key={group.employee.id} className="bg-white rounded-2xl border-2 border-gray-200 bg-gray-50 shadow-xl overflow-hidden animate-fade-in">
                       {/* Header nhân viên */}
-                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 py-4 flex justify-between items-center text-white flex-wrap gap-2">
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 py-4 flex justify-between items-center text-gray-100 flex-wrap gap-2">
                         <div className="font-bold text-lg sm:text-xl flex items-center gap-3">
                           <UserCircle className="w-6 h-6 sm:w-7 sm:h-7" />
                           {group.employee.name}
@@ -781,39 +799,81 @@ export function AdminPage() {
                         </div>
                       </div>
 
-                      {/* MOBILE: Card layout (hiển thị trên màn hình nhỏ) */}
+                      {/* MOBILE: Card layout */}
                       <div className="md:hidden divide-y divide-gray-100">
-                        {group.reports.map((report, index) => (
-                          <div key={report.id} className={`p-4 ${index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}>
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <div className="font-bold text-gray-900 text-sm">{report.customerName}</div>
-                                <div className="text-xs text-gray-500 mt-0.5">{new Date(report.date).toLocaleDateString('vi-VN')} · {report.containerType}</div>
+                        {group.gasReports.length > 0 && (
+                          <>
+                            <div className="px-4 py-2 bg-blue-50 text-blue-800 font-bold text-xs uppercase tracking-wider">Gas lớn</div>
+                            {group.gasReports.map((report, index) => (
+                              <div key={report.id} className={`p-4 ${index % 2 === 0 ? 'bg-gradient-to-r from-blue-100 to-blue-50' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <div className="font-bold text-gray-900 text-sm">{report.customerName}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{new Date(report.date).toLocaleDateString('vi-VN')} · {report.containerType}</div>
+                                  </div>
+                                  <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">SL: {report.quantity}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                                  <div className="text-gray-500">Đơn giá</div>
+                                  <div className="text-right text-gray-700 font-extrabold">{report.unitPrice.toLocaleString('vi-VN')} ₫</div>
+                                  <div className="text-gray-500">Thành tiền</div>
+                                  <div className="text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</div>
+                                  <div className="text-gray-500">Thực nhận</div>
+                                  <div className="text-right font-extrabold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</div>
+                                  {report.notes && (
+                                    <>
+                                      <div className="text-gray-500">Ghi chú</div>
+                                      <div className="text-right text-gray-600">{report.notes}</div>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">SL: {report.quantity}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
-                              <div className="text-gray-500">Đơn giá</div>
-                              <div className="text-right text-gray-700 font-semibold">{report.unitPrice.toLocaleString('vi-VN')} ₫</div>
-                              <div className="text-gray-500">Thành tiền</div>
-                              <div className="text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</div>
-                              <div className="text-gray-500">Thực nhận</div>
-                              <div className="text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</div>
-                              {report.notes && (
-                                <>
-                                  <div className="text-gray-500">Ghi chú</div>
-                                  <div className="text-right text-gray-600">{report.notes}</div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                            ))}
+                          </>
+                        )}
+                        {group.cannedReports.length > 0 && (
+                          <>
+                            <div className="px-4 py-2 bg-teal-50 text-gray-800 font-bold text-xs uppercase tracking-wider">Gas lon</div>
+                            {group.cannedReports.map((report, index) => (
+                              <div key={report.id} className={`p-4 ${index % 2 === 0 ? 'bg-gradient-to-r from-blue-100 to-blue-50' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <div className="font-bold text-gray-900 text-sm">{report.customerName}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{new Date(report.date).toLocaleDateString('vi-VN')}</div>
+                                  </div>
+                                  <span className="text-xs font-bold bg-teal-100 text-gray-700 px-2 py-1 rounded-full">SL: {report.quantity}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                                  <div className="text-gray-500">Giá bán</div>
+                                  <div className="text-right font-bold text-teal-600">{report.unitPrice.toLocaleString('vi-VN')} ₫</div>
+                                  <div className="text-gray-500">Tổng thu</div>
+                                  <div className="text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</div>
+                                  <div className="text-gray-500">Thực nhận</div>
+                                  <div className="text-right font-extrabold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</div>
+                                  {report.notes && (
+                                    <>
+                                      <div className="text-gray-500">Ghi chú</div>
+                                      <div className="text-right text-gray-600">{report.notes}</div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
                         {/* Footer tổng cộng mobile */}
                         <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
                           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            <div className="font-extrabold text-blue-800">Tổng số bình</div>
+                            <div className="font-extrabold text-blue-800">Tổng số bình lớn</div>
                             <div className="text-right font-extrabold text-blue-800">{group.totalQuantity}</div>
-                            <div className="font-extrabold text-blue-800">Tổng thành tiền</div>
+                            {group.totalCannedQuantity > 0 && (
+                              <>
+                                <div className="font-extrabold text-gray-800">Tổng số Gas lon</div>
+                                <div className="text-right font-extrabold text-gray-800">{group.totalCannedQuantity}</div>
+                              </>
+                            )}
+                            <div className="font-extrabold text-blue-800">Tổng doanh thu</div>
                             <div className="text-right font-extrabold text-green-700">{group.totalRevenue.toLocaleString('vi-VN')} ₫</div>
                             <div className="font-extrabold text-blue-800">Tổng thực nhận</div>
                             <div className="text-right font-extrabold text-orange-700">{group.totalReceived.toLocaleString('vi-VN')} ₫</div>
@@ -837,25 +897,52 @@ export function AdminPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {group.reports.map((report, index) => (
-                              <tr key={report.id} className={`border-b border-gray-100 transition-colors ${
-                                index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'
-                              } hover:bg-orange-50`}>
-                                <td className="py-3 px-5 text-xs font-semibold text-gray-500">{new Date(report.date).toLocaleDateString('vi-VN')}</td>
-                                <td className="py-3 px-5 text-sm font-semibold text-gray-900">{report.customerName}</td>
-                                <td className="py-3 px-5 text-sm text-center font-bold text-blue-600">{report.quantity}</td>
-                                <td className="py-3 px-5 text-sm text-gray-700">{report.containerType}</td>
-                                <td className="py-3 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
-                                <td className="py-3 px-5 text-sm text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</td>
-                                <td className="py-3 px-5 text-sm text-right font-semibold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
-                                <td className="py-3 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
-                              </tr>
-                            ))}
+                            {group.gasReports.length > 0 && (
+                              <>
+                                <tr><td colSpan={8} className="bg-blue-50 py-2 px-5 text-xs font-bold text-blue-800 uppercase tracking-wider">Gas lớn</td></tr>
+                                {group.gasReports.map((report, index) => (
+                                  <tr key={report.id} className={`border-b border-gray-100 transition-colors ${
+                                    index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'
+                                  } hover:bg-orange-50`}>
+                                    <td className="py-3 px-5 text-xs font-extrabold text-gray-500">{new Date(report.date).toLocaleDateString('vi-VN')}</td>
+                                    <td className="py-3 px-5 text-sm font-extrabold text-gray-900">{report.customerName}</td>
+                                    <td className="py-3 px-5 text-sm text-center font-bold text-blue-600">{report.quantity}</td>
+                                    <td className="py-3 px-5 text-sm text-gray-700">{report.containerType}</td>
+                                    <td className="py-3 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-right font-extrabold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
+                                  </tr>
+                                ))}
+                              </>
+                            )}
+                            {group.cannedReports.length > 0 && (
+                              <>
+                                <tr><td colSpan={8} className="bg-blue-50 py-2 px-5 text-xs font-bold text-gray-800 uppercase tracking-wider">Gas lon</td></tr>
+                                {group.cannedReports.map((report, index) => (
+                                  <tr key={report.id} className={`border-b border-gray-100 transition-colors ${
+                                    index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'
+                                  } hover:bg-orange-50`}>
+                                    <td className="py-3 px-5 text-xs font-extrabold text-gray-500">{new Date(report.date).toLocaleDateString('vi-VN')}</td>
+                                    <td className="py-3 px-5 text-sm font-extrabold text-gray-900">{report.customerName}</td>
+                                    <td className="py-3 px-5 text-sm text-center font-bold text-teal-600">{report.quantity}</td>
+                                    <td className="py-3 px-5 text-sm text-gray-700">Gas lon</td>
+                                    <td className="py-3 px-5 text-sm text-right text-gray-700">{report.unitPrice.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-right font-bold text-green-600">{report.total.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-right font-extrabold text-orange-600">{report.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                                    <td className="py-3 px-5 text-sm text-gray-600">{report.notes || '-'}</td>
+                                  </tr>
+                                ))}
+                              </>
+                            )}
                           </tbody>
                           <tfoot>
                             <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-200">
                               <td colSpan={2} className="py-3 px-5 text-sm font-extrabold text-blue-800">Tổng cộng</td>
-                              <td className="py-3 px-5 text-sm text-center font-extrabold text-blue-800">{group.totalQuantity}</td>
+                              <td className="py-3 px-5 text-sm text-center font-extrabold text-blue-800">
+                                {group.totalQuantity} bình
+                                {group.totalCannedQuantity > 0 && <span className="text-gray-700 block text-xs">(+ {group.totalCannedQuantity} lon)</span>}
+                              </td>
                               <td /><td />
                               <td className="py-3 px-5 text-sm text-right font-extrabold text-green-700">{group.totalRevenue.toLocaleString('vi-VN')} ₫</td>
                               <td className="py-3 px-5 text-sm text-right font-extrabold text-orange-700">{group.totalReceived.toLocaleString('vi-VN')} ₫</td>
@@ -876,7 +963,7 @@ export function AdminPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <Database className="w-8 h-8 text-white" />
+                <Database className="w-8 h-8 text-gray-100" />
               </div>
               <div>
                 <h2 className="text-3xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
@@ -888,12 +975,12 @@ export function AdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Danh sách kho */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Tồn kho hiện tại</h3>
                 <div className="space-y-4">
                   {inventory.length > 0 ? (
                     inventory.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                      <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border-2 border-gray-200">
                         <div className="flex items-center gap-3">
                           <Package className="w-6 h-6 text-orange-500" />
                           <span className="font-bold text-gray-800">{item.containerType}</span>
@@ -952,7 +1039,7 @@ export function AdminPage() {
               </div>
 
               {/* Nhập kho */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Nhập hàng vào kho</h3>
                 <form onSubmit={handleImportInventory} className="space-y-6">
                   <div>
@@ -963,7 +1050,7 @@ export function AdminPage() {
                       value={importData.type}
                       onChange={e => setImportData({ ...importData, type: e.target.value })}
                       placeholder="VD: Bình 12kg..."
-                      className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                      className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                       required
                     />
                     <datalist id="containerTypes">
@@ -980,13 +1067,13 @@ export function AdminPage() {
                         min="0"
                         value={importData.fullQuantity === 0 ? '' : importData.fullQuantity}
                         onChange={e => setImportData({ ...importData, fullQuantity: parseInt(e.target.value) || 0 })}
-                        className="w-full px-5 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                       />
                     </div>
                   </div>
                   <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-xl"
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-gray-100 py-4 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-xl"
                   >
                     <PlusCircle className="w-5 h-5" />
                     Thêm vào kho
@@ -1001,7 +1088,7 @@ export function AdminPage() {
           <div className="space-y-8 animate-fade-in text-gray-900">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <DollarSign className="w-8 h-8 text-white" />
+                <DollarSign className="w-8 h-8 text-gray-100" />
               </div>
               <div>
                 <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
@@ -1014,7 +1101,7 @@ export function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cột 1: Cấu hình Công thức */}
               <div className="lg:col-span-1 space-y-6">
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 border border-gray-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                     🔧 Công thức lương
                   </h3>
@@ -1026,13 +1113,13 @@ export function AdminPage() {
                         onChange={e => setFormulaInput(e.target.value)}
                         placeholder="VD: baseSalary * overtime"
                         rows={3}
-                        className="w-full px-4 py-3 bg-white text-gray-900 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-mono text-sm"
+                        className="w-full px-4 py-3 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-mono text-sm"
                         required
                       />
                     </div>
                     <button
                       type="submit"
-                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg"
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-gray-100 py-3 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-lg"
                     >
                       <Save className="w-5 h-5" />
                       Lưu công thức
@@ -1040,26 +1127,26 @@ export function AdminPage() {
                   </form>
                 </div>
 
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-gray-100">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 border border-gray-100">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Biến số khả dụng</h3>
                   <div className="space-y-3 text-sm text-gray-700">
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border-2 border-gray-200">
                       <code className="font-bold text-red-600">baseSalary</code>: Lương cơ bản của nhân viên
                     </div>
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border-2 border-gray-200">
                       <code className="font-bold text-blue-600">overtime</code>: Số công tăng ca (hệ số tăng ca)
                     </div>
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border-2 border-gray-200">
                       <code className="font-bold text-green-600">workDays</code>: Số ngày công làm việc thực tế
                     </div>
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border-2 border-gray-200">
                       <code className="font-bold text-orange-600">bonus</code>: Tiền thưởng thêm (VND)
                     </div>
-                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-2.5 bg-gray-50 rounded-xl border-2 border-gray-200">
                       <code className="font-bold text-purple-600">deliveries</code>: Tổng số bình gas đã giao
                     </div>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500 leading-relaxed">
+                  <div className="mt-6 pt-4 border-t-2 border-blue-200 text-xs text-gray-500 leading-relaxed">
                     <p className="font-bold mb-1">Ví dụ công thức:</p>
                     <ul className="list-disc list-inside space-y-1">
                       <li><code className="bg-gray-100 px-1 py-0.5 rounded">baseSalary * overtime</code></li>
@@ -1072,7 +1159,7 @@ export function AdminPage() {
 
               {/* Cột 2 & 3: Bảng tính lương */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
                   <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
                     <h3 className="text-xl font-bold text-gray-900">Thông số lương & Tính toán</h3>
                     <div className="flex items-center gap-3">
@@ -1080,12 +1167,12 @@ export function AdminPage() {
                         type="month"
                         value={selectedMonth}
                         onChange={e => setSelectedMonth(e.target.value)}
-                        className="px-4 py-2.5 bg-white text-gray-900 border-2 border-gray-200 rounded-xl outline-none font-bold focus:ring-2 focus:ring-orange-500"
+                        className="px-4 py-2.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl outline-none font-bold focus:ring-2 focus:ring-orange-500"
                       />
                       <button
                         onClick={handleCalculateSalary}
                         disabled={isCalculating}
-                        className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold hover:scale-[1.02] transition-all shadow-md disabled:opacity-50"
+                        className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-gray-100 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-md disabled:opacity-50"
                       >
                         {isCalculating ? 'Đang tính...' : 'Tính lương'}
                       </button>
@@ -1104,9 +1191,9 @@ export function AdminPage() {
                         const empInputs = editingInputs[sal.employeeId] || { overtime: '1', workDays: '26', bonus: '0' };
                         
                         return (
-                          <div key={sal.employeeId} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm transition-all hover:shadow-md">
+                          <div key={sal.employeeId} className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white shadow-lg transition-all hover:shadow-md">
                             {/* Header dòng lương nhân viên */}
-                            <div className="p-5 bg-gray-50/50 border-b border-gray-100">
+                            <div className="p-5 bg-gradient-to-r from-blue-100 to-blue-50 border-b border-gray-100">
                               <div className="flex items-center justify-between flex-wrap gap-4">
                                 <div>
                                   <h4 className="font-extrabold text-lg text-gray-900">{sal.employeeName}</h4>
@@ -1139,7 +1226,7 @@ export function AdminPage() {
                                     ...editingInputs,
                                     [sal.employeeId]: { ...empInputs, overtime: e.target.value }
                                   })}
-                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                  className="w-full px-3 py-2 border-2 border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
                                 />
                               </div>
                               <div>
@@ -1153,7 +1240,7 @@ export function AdminPage() {
                                     ...editingInputs,
                                     [sal.employeeId]: { ...empInputs, workDays: e.target.value }
                                   })}
-                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                  className="w-full px-3 py-2 border-2 border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
                                 />
                               </div>
                               <div>
@@ -1167,13 +1254,13 @@ export function AdminPage() {
                                     ...editingInputs,
                                     [sal.employeeId]: { ...empInputs, bonus: e.target.value }
                                   })}
-                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
+                                  className="w-full px-3 py-2 border-2 border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-900 outline-none focus:border-orange-500"
                                 />
                               </div>
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleSaveMonthlyInput(sal.employeeId)}
-                                  className="flex-1 py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                                  className="flex-1 py-2 px-3 bg-green-500 hover:bg-green-600 text-gray-100 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-lg"
                                   title="Lưu thông số & Tính lại"
                                 >
                                   <Save className="w-4 h-4" />
@@ -1195,7 +1282,7 @@ export function AdminPage() {
                                   <h5 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
                                     Chi tiết gas đã giao trong tháng ({sal.totalDeliveries} bình)
                                   </h5>
-                                  <span className="text-xs font-semibold text-gray-500">
+                                  <span className="text-xs font-extrabold text-gray-500">
                                     Công thức sử dụng: <code className="bg-gray-100 px-1 py-0.5 rounded font-mono text-gray-800">{sal.formula}</code>
                                   </span>
                                 </div>
@@ -1213,7 +1300,7 @@ export function AdminPage() {
                                       <tbody>
                                         {sal.breakdown.map((item: any, idx: number) => (
                                           <tr key={idx} className="border-b border-gray-100">
-                                            <td className="py-2 font-semibold text-gray-700">{item.containerType}</td>
+                                            <td className="py-2 font-extrabold text-gray-700">{item.containerType}</td>
                                             <td className="py-2 text-center font-bold text-blue-600">{item.quantity} bình</td>
                                           </tr>
                                         ))}
