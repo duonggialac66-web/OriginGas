@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { DeliveryReport, Employee, Expense, Inventory, SalaryConfig, CalculatedSalary, SalaryFormula } from '../types';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { DeliveryReport, Employee, Expense, Inventory, SalaryConfig, CalculatedSalary, SalaryFormula, Customer } from '../types';
 import { API_BASE_URL } from '../lib/api';
+import { hashCustomerName } from '../lib/hashName';
 
 interface DataContextType {
   deliveryReports: DeliveryReport[];
@@ -9,6 +10,7 @@ interface DataContextType {
   salaryConfigs: SalaryConfig[];
   salaryFormula: string;
   expenses: Expense[];
+  customers: Customer[];
   addDeliveryReport: (report: Omit<DeliveryReport, 'id' | 'createdAt'>) => Promise<{ success: boolean; message?: string }>;
   updateDeliveryReport: (id: string, report: Omit<DeliveryReport, 'id' | 'createdAt' | 'employeeId' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
   deleteDeliveryReport: (id: string) => Promise<{ success: boolean; message?: string }>;
@@ -24,6 +26,12 @@ interface DataContextType {
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
   updateExpense: (id: string, data: Pick<Expense, 'description' | 'amount' | 'notes'>) => Promise<{ success: boolean; message?: string }>;
   deleteExpense: (id: string) => Promise<{ success: boolean; message?: string }>;
+  addCustomer: (data: { name: string; phone?: string; address?: string; latitude?: number | null; longitude?: number | null; notes?: string }) => Promise<Customer>;
+  updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<{ success: boolean; message?: string }>;
+  updateCustomerLocation: (id: string, latitude: number, longitude: number) => Promise<void>;
+  updateReportPaymentStatus: (id: string, status: 'paid' | 'debt') => Promise<void>;
+  customerMap: Map<string, Customer>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -37,6 +45,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [salaryConfigs, setSalaryConfigs] = useState<SalaryConfig[]>([]);
   const [salaryFormula, setSalaryFormula] = useState<string>('baseSalary * overtime');
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const fetchAllData = (token: string) => {
     fetch(`${API_BASE_URL}/api/reports`, { headers: { Authorization: `Bearer ${token}` } })
@@ -61,6 +70,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     fetch(`${API_BASE_URL}/api/expenses`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json()).then(data => { if (Array.isArray(data)) setExpenses(data); })
+      .catch(err => console.error(err));
+
+    fetch(`${API_BASE_URL}/api/customers`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json()).then(data => { if (Array.isArray(data)) setCustomers(data); })
       .catch(err => console.error(err));
   };
 
@@ -441,6 +454,106 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addCustomer = async (data: { name: string; phone?: string; address?: string; latitude?: number | null; longitude?: number | null; notes?: string }): Promise<Customer> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) throw new Error('Chưa đăng nhập');
+
+    const res = await fetch(`${API_BASE_URL}/api/customers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    const customer = await res.json();
+    if (res.ok) {
+      setCustomers(prev => {
+        const exists = prev.find(c => c.id === customer.id);
+        if (exists) return prev.map(c => c.id === customer.id ? customer : c);
+        return [customer, ...prev];
+      });
+      return customer;
+    }
+    throw new Error(customer.message || 'Lỗi tạo khách hàng');
+  };
+
+  const updateCustomer = async (id: string, data: Partial<Customer>): Promise<void> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return;
+
+    const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setCustomers(prev => prev.map(c => c.id === id ? updated : c));
+    }
+  };
+
+  const deleteCustomer = async (id: string): Promise<{ success: boolean; message?: string }> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setCustomers(prev => prev.filter(c => c.id !== id));
+        // Need to refetch reports as their customerId might be set to null
+        fetchAllData(token);
+        return { success: true };
+      }
+      const err = await res.json();
+      return { success: false, message: err.message };
+    } catch {
+      return { success: false, message: 'Lỗi mạng khi gọi server' };
+    }
+  };
+
+  const updateCustomerLocation = async (id: string, latitude: number, longitude: number): Promise<void> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return;
+
+    const res = await fetch(`${API_BASE_URL}/api/customers/${id}/location`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ latitude, longitude }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setCustomers(prev => prev.map(c => c.id === id ? updated : c));
+    }
+  };
+
+  const updateReportPaymentStatus = async (id: string, status: 'paid' | 'debt'): Promise<{ success: boolean; message?: string }> => {
+    const token = localStorage.getItem('gasToken');
+    if (!token) return { success: false, message: 'Chưa đăng nhập' };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports/${id}/payment-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ paymentStatus: status }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setDeliveryReports(prev => prev.map(r => r.id === id ? { ...r, paymentStatus: data.paymentStatus } : r));
+        return { success: true };
+      }
+      return { success: false, message: data.message };
+    } catch (error) {
+      return { success: false, message: 'Lỗi mạng khi cập nhật' };
+    }
+  };
+
+  const customerMap = useMemo(() => {
+    const map = new Map<string, Customer>();
+    customers.forEach(c => map.set(hashCustomerName(c.name), c));
+    return map;
+  }, [customers]);
+
   return (
     <DataContext.Provider value={{
       deliveryReports,
@@ -449,6 +562,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       salaryConfigs,
       salaryFormula,
       expenses,
+      customers,
       addDeliveryReport,
       updateDeliveryReport,
       deleteDeliveryReport,
@@ -464,6 +578,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addExpense,
       updateExpense,
       deleteExpense,
+      addCustomer,
+      updateCustomer,
+      deleteCustomer,
+      updateCustomerLocation,
+      updateReportPaymentStatus,
+      customerMap,
     }}>
       {children}
     </DataContext.Provider>

@@ -31,11 +31,13 @@ model User {
 }
 
 model DeliveryReport {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   employeeId     String
-  employee       User     @relation(fields: [employeeId], references: [id])
+  employee       User      @relation(fields: [employeeId], references: [id])
   date           String // Lưu ngày dạng "YYYY-MM-DD"
   customerName   String
+  customerId     String? // Liên kết tới bảng Customer (nullable cho dữ liệu cũ)
+  customer       Customer? @relation(fields: [customerId], references: [id])
   quantity       Int // Số lượng bình đầy giao cho khách
   containerType  String
   unitPrice      Float
@@ -43,8 +45,24 @@ model DeliveryReport {
   actualReceived Float
   notes          String?
   receiptUrl     String? // Dùng cho Cloudinary (ảnh hóa đơn/biên nhận)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  paymentStatus  String   @default("paid") // "paid" | "debt"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String   @unique // Tên khách hàng — key nhận diện chính
+  phone     String? // SĐT (tùy chọn)
+  address   String? // Địa chỉ dạng text
+  latitude  Float? // Vĩ độ GPS
+  longitude Float? // Kinh độ GPS
+  notes     String? // Ghi chú thêm
+  nameHash  String?  @unique // Hash của tên để lookup O(1) và bắt trùng
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports DeliveryReport[]
 }
 
 model Inventory {

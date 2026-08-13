@@ -11,12 +11,27 @@ export interface DeliveryReport {
   employeeName: string;
   date: string;
   customerName: string;
+  customerId?: string | null;
+  customer?: Customer | null;
   quantity: number; // Bình đầy
   containerType: string;
   unitPrice: number;
   total: number;
   actualReceived: number;
   notes: string;
+  paymentStatus: 'paid' | 'debt';
+  createdAt: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  nameHash?: string;
+  phone: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  notes: string | null;
   createdAt: string;
 }
 

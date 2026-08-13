@@ -18,6 +18,7 @@ export class ReportsService {
     return reports.map((r: any) => ({
       ...r,
       employeeName: r.employee.name,
+      customer: r.customer || null,
     }));
   }
 
@@ -38,19 +39,22 @@ export class ReportsService {
       employeeId: userId,
       date: data.date,
       customerName: data.customerName,
+      customerId: data.customerId || null,
       quantity,
       containerType: data.containerType,
       unitPrice: Number(data.unitPrice) || 0,
       total: Number(data.total) || 0,
       actualReceived: Number(data.actualReceived) || 0,
       notes: data.notes || '',
+      paymentStatus: data.paymentStatus || 'paid',
     };
 
     const [newReport] = await reportsRepository.createReportTransaction(reportData);
     
     return {
       ...newReport,
-      employeeName: newReport.employee.name
+      employeeName: newReport.employee.name,
+      customer: (newReport as any).customer || null,
     };
   }
 
@@ -108,6 +112,7 @@ export class ReportsService {
     const reportData = {
       date: data.date,
       customerName: data.customerName,
+      customerId: data.customerId !== undefined ? (data.customerId || null) : existingReport.customerId,
       quantity,
       containerType: newType,
       unitPrice: Number(data.unitPrice) || 0,
@@ -115,13 +120,15 @@ export class ReportsService {
       actualReceived: Number(data.actualReceived) || 0,
       notes: data.notes || '',
       receiptUrl: data.receiptUrl || existingReport.receiptUrl,
+      paymentStatus: data.paymentStatus || existingReport.paymentStatus,
     };
 
     const [updatedReport] = await reportsRepository.updateReportTransaction(id, reportData, inventoryUpdates);
 
     return {
       ...updatedReport,
-      employeeName: updatedReport.employee.name
+      employeeName: updatedReport.employee.name,
+      customer: (updatedReport as any).customer || null,
     };
   }
 
@@ -137,6 +144,20 @@ export class ReportsService {
 
     await reportsRepository.deleteReportTransaction(id, existingReport.containerType, existingReport.quantity);
     return { success: true };
+  }
+
+  async updatePaymentStatus(id: string, userId: string, userRole: string, paymentStatus: 'paid' | 'debt') {
+    const existingReport = await reportsRepository.findById(id);
+    if (!existingReport) {
+      throw new Error('Không tìm thấy báo cáo');
+    }
+
+    if (userRole === 'employee' && existingReport.employeeId !== userId) {
+      throw new Error('Bạn không có quyền chỉnh sửa báo cáo này');
+    }
+
+    const updated = await reportsRepository.updatePaymentStatus(id, paymentStatus);
+    return updated;
   }
 }
 

@@ -4,7 +4,7 @@ export class ReportsRepository {
   async findReports(whereClause: any) {
     return prisma.deliveryReport.findMany({
       where: whereClause,
-      include: { employee: true },
+      include: { employee: true, customer: true },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -20,7 +20,7 @@ export class ReportsRepository {
       return prisma.$transaction([
         prisma.deliveryReport.create({
           data: reportData,
-          include: { employee: true }
+          include: { employee: true, customer: true }
         })
       ]);
     }
@@ -28,7 +28,7 @@ export class ReportsRepository {
     return prisma.$transaction([
       prisma.deliveryReport.create({
         data: reportData,
-        include: { employee: true }
+        include: { employee: true, customer: true }
       }),
       prisma.inventory.update({
         where: { containerType: reportData.containerType },
@@ -42,7 +42,15 @@ export class ReportsRepository {
   async findById(id: string) {
     return prisma.deliveryReport.findUnique({
       where: { id },
-      include: { employee: true }
+      include: { employee: true, customer: true }
+    });
+  }
+
+  async updatePaymentStatus(id: string, paymentStatus: 'paid' | 'debt') {
+    return prisma.deliveryReport.update({
+      where: { id },
+      data: { paymentStatus },
+      include: { employee: true, customer: true }
     });
   }
 
@@ -51,7 +59,7 @@ export class ReportsRepository {
       prisma.deliveryReport.update({
         where: { id },
         data: updateData,
-        include: { employee: true }
+        include: { employee: true, customer: true }
       })
     ];
 

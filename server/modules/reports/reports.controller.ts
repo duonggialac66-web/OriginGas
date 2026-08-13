@@ -62,6 +62,25 @@ export class ReportsController {
       }
     }
   }
+
+  async updatePaymentStatus(req: any, res: any) {
+    try {
+      const updated = await reportsService.updatePaymentStatus(
+        req.params.id,
+        req.user?.id,
+        req.user?.role,
+        req.body.paymentStatus
+      );
+      res.json(updated);
+    } catch (error: any) {
+      if (error.message === 'Không tìm thấy báo cáo' || error.message === 'Bạn không có quyền chỉnh sửa báo cáo này') {
+        res.status(400).json({ message: error.message });
+      } else {
+        console.error('Lỗi cập nhật trạng thái thanh toán:', error);
+        res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái thanh toán' });
+      }
+    }
+  }
 }
 
 export const reportsController = new ReportsController();
