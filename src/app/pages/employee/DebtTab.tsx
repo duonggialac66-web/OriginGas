@@ -52,32 +52,32 @@ export function DebtTab() {
         </h3>
         
         {debtReports.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border-2 border-slate-700 shadow-sm">
-            <table className="w-full text-sm border-collapse bg-white whitespace-nowrap">
+          <div className="overflow-x-auto pb-4">
+            <table className="w-full text-base border-collapse bg-white border-2 border-slate-700 min-w-[600px]">
               <thead>
                 <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                  <th className="py-4 px-5 text-left font-extrabold border-2 border-slate-700">Tên người nợ</th>
-                  <th className="py-4 px-5 text-left font-extrabold border-2 border-slate-700">Ngày nợ</th>
-                  <th className="py-4 px-5 text-left font-extrabold border-2 border-slate-700">Chi tiết</th>
-                  <th className="py-4 px-5 text-right font-extrabold border-2 border-slate-700">Số tiền nợ</th>
-                  <th className="py-4 px-5 text-center font-extrabold border-2 border-slate-700">Trạng thái</th>
+                  <th className="py-5 px-6 text-left font-extrabold border-2 border-slate-700">Tên người nợ</th>
+                  <th className="py-5 px-6 text-left font-extrabold border-2 border-slate-700">Ngày nợ</th>
+                  <th className="py-5 px-6 text-left font-extrabold border-2 border-slate-700">Chi tiết</th>
+                  <th className="py-5 px-6 text-right font-extrabold border-2 border-slate-700">Số tiền nợ</th>
+                  <th className="py-5 px-6 text-center font-extrabold border-2 border-slate-700">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
                 {debtReports.map((r, i) => (
                   <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
-                    <td className="py-4 px-5 font-bold text-slate-900 border-2 border-slate-700">
+                    <td className="py-5 px-6 font-bold text-slate-900 border-2 border-slate-700">
                       <div>{r.customerName}</div>
                       {r.customer?.phone && <div className="text-xs text-gray-500 mt-1">{r.customer.phone}</div>}
                     </td>
-                    <td className="py-4 px-5 font-bold text-gray-700 border-2 border-slate-700">{r.date}</td>
-                    <td className="py-4 px-5 font-bold text-gray-700 border-2 border-slate-700">
+                    <td className="py-5 px-6 font-bold text-gray-700 border-2 border-slate-700">{r.date}</td>
+                    <td className="py-5 px-6 font-bold text-gray-700 border-2 border-slate-700">
                       {r.quantity} bình {r.containerType} {r.notes && <span className="text-xs text-gray-500 italic ml-1">({r.notes})</span>}
                     </td>
-                    <td className="py-4 px-5 text-right font-extrabold text-red-600 border-2 border-slate-700">
+                    <td className="py-5 px-6 text-right font-extrabold text-red-600 border-2 border-slate-700">
                       {r.total.toLocaleString('vi-VN')} ₫
                     </td>
-                    <td className="py-4 px-5 text-center border-2 border-slate-700">
+                    <td className="py-5 px-6 text-center border-2 border-slate-700">
                       <button 
                         onClick={() => handleMarkPaid(r.id)}
                         className="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2 mx-auto"

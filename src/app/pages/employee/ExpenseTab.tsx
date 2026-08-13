@@ -66,13 +66,13 @@ export function ExpenseTab() {
         <form onSubmit={handleExpenseSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">Mô tả khoản chi</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">Mô tả khoản chi</label>
               <input type="text" value={expenseForm.description} onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
                 className="w-full px-4 py-3 text-slate-900 border border-gray-200 bg-gray-50 rounded-xl outline-none focus:border-red-500"
                 placeholder="VD: Tiền xăng, phí cầu đường..." required />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">Số tiền chi (₫)</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">Số tiền chi (₫)</label>
               <input type="number" value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
                 onBlur={(e) => handlePriceBlur(e.target.value, (newVal) => setExpenseForm({ ...expenseForm, amount: newVal }))}
                 className="w-full px-4 py-3 text-slate-900 border border-gray-200 bg-gray-50 rounded-xl outline-none focus:border-red-500"
@@ -80,7 +80,7 @@ export function ExpenseTab() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-800 mb-2">Ghi chú</label>
+            <label className="block text-base font-bold text-gray-800 mb-2">Ghi chú</label>
             <input type="text" value={expenseForm.notes} onChange={e => setExpenseForm({ ...expenseForm, notes: e.target.value })}
               className="w-full px-4 py-3 text-slate-900 border border-gray-200 bg-gray-50 rounded-xl outline-none focus:border-red-500"
               placeholder="Ghi chú thêm (nếu có)" />
@@ -107,23 +107,23 @@ export function ExpenseTab() {
             <h3 className="text-xl font-extrabold text-slate-900">Lịch sử hôm nay</h3>
           </div>
           
-          <div className="overflow-x-auto rounded-xl border-2 border-slate-700 shadow-sm">
-            <table className="w-full text-sm border-collapse bg-white whitespace-nowrap">
+          <div className="overflow-x-auto pb-4">
+            <table className="w-full text-base border-collapse bg-white border-2 border-slate-700 min-w-[500px]">
               <thead>
                 <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                  <th className="text-left py-4 px-5 font-extrabold border-2 border-slate-700">Mô tả</th>
-                  <th className="text-right py-4 px-5 font-extrabold border-2 border-slate-700">Số tiền</th>
-                  <th className="text-left py-4 px-5 font-extrabold border-2 border-slate-700">Ghi chú</th>
-                  <th className="text-center py-4 px-5 font-extrabold border-2 border-slate-700">Thao tác</th>
+                  <th className="text-left py-5 px-6 font-extrabold border-2 border-slate-700">Mô tả</th>
+                  <th className="text-right py-5 px-6 font-extrabold border-2 border-slate-700">Số tiền</th>
+                  <th className="text-left py-5 px-6 font-extrabold border-2 border-slate-700">Ghi chú</th>
+                  <th className="text-center py-5 px-6 font-extrabold border-2 border-slate-700">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {myExpensesToday.map((exp, i) => (
                   <tr key={exp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
-                    <td className="py-4 px-5 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
-                    <td className="py-4 px-5 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
-                    <td className="py-4 px-5 font-bold text-gray-600 border-2 border-slate-700">{exp.notes || '-'}</td>
-                    <td className="py-4 px-5 text-center flex justify-center gap-2 border-2 border-slate-700">
+                    <td className="py-5 px-6 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
+                    <td className="py-5 px-6 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
+                    <td className="py-5 px-6 font-bold text-gray-600 border-2 border-slate-700">{exp.notes || '-'}</td>
+                    <td className="py-5 px-6 text-center flex justify-center gap-2 border-2 border-slate-700">
                       <button onClick={() => handleStartEditExpense(exp)} className="p-2 text-blue-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-4 h-4"/></button>
                       <button onClick={() => handleDeleteExpense(exp.id)} className="p-2 text-red-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><X className="w-4 h-4"/></button>
                     </td>
@@ -132,8 +132,8 @@ export function ExpenseTab() {
               </tbody>
               <tfoot>
                 <tr className="bg-slate-200 text-slate-900 border-t-2 border-slate-700">
-                  <td className="py-4 px-5 font-bold border-2 border-slate-700">Tổng chi</td>
-                  <td className="py-4 px-5 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseToday.toLocaleString('vi-VN')} ₫</td>
+                  <td className="py-5 px-6 font-bold border-2 border-slate-700">Tổng chi</td>
+                  <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseToday.toLocaleString('vi-VN')} ₫</td>
                   <td colSpan={2} className="border-2 border-slate-700"></td>
                 </tr>
               </tfoot>

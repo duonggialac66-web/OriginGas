@@ -35,14 +35,14 @@ export function EmployeePage() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="p-4 max-w-3xl mx-auto">
+      <main className="p-4 max-w-5xl mx-auto">
         {activeTab === 'report' && <ReportTab />}
         {activeTab === 'customer' && <CustomerTab />}
         {activeTab === 'debt' && <DebtTab />}
       </main>
 
       {/* BOTTOM NAVIGATION BARS FOR MOBILE */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] md:max-w-3xl md:mx-auto md:bottom-4 md:rounded-2xl md:border">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] md:max-w-5xl md:mx-auto md:bottom-4 md:rounded-2xl md:border">
         <NavButton active={activeTab === 'report'} onClick={() => setActiveTab('report')} icon={<FileText className="w-6 h-6" />} label="Báo cáo" />
         <NavButton active={activeTab === 'customer'} onClick={() => setActiveTab('customer')} icon={<Users className="w-6 h-6" />} label="Khách hàng" />
         <NavButton active={activeTab === 'debt'} onClick={() => setActiveTab('debt')} icon={<BookOpen className="w-6 h-6" />} label="Sổ nợ" />
