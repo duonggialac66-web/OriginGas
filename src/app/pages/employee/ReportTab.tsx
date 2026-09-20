@@ -9,7 +9,7 @@ import { ExpenseTab } from './ExpenseTab';
 
 export function ReportTab() {
   const { user } = useAuth();
-  const { addDeliveryReport, updateDeliveryReport, deleteDeliveryReport, deliveryReports, inventory, expenses, updateReportPaymentStatus, customers, addCustomer } = useData();
+  const { addDeliveryReport, updateDeliveryReport, deleteDeliveryReport, deliveryReports, inventory, expenses, updateReportPaymentStatus, customers, addCustomer, retryDeliveryReport } = useData();
 
   const [activeSection, setActiveSection] = useState<'gas-big' | 'gas-small' | 'expense' | 'summary'>('gas-big');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -488,6 +488,13 @@ export function ReportTab() {
                               <a href={`https://www.google.com/maps/search/?api=1&query=${r.customer.latitude},${r.customer.longitude}`} target="_blank" rel="noreferrer" className="text-blue-500"><Navigation className="w-4 h-4"/></a>
                             )}
                           </div>
+                          {r.syncStatus === 'pending' && <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
+                          {r.syncStatus === 'error' && (
+                            <div className="mt-1 flex items-center gap-2">
+                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">❌ Lỗi gửi</span>
+                               <button onClick={() => retryDeliveryReport(r.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded shadow hover:bg-red-700">Gửi lại</button>
+                            </div>
+                          )}
                         </td>
                         <td className="py-5 px-6 text-center border-2 border-slate-700">
                           <button 
@@ -573,7 +580,16 @@ export function ReportTab() {
                   <tbody>
                     {cannedGasReportsFiltered.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                        <td className="py-5 px-6 font-bold border-2 border-slate-700">{r.customerName}</td>
+                        <td className="py-5 px-6 font-bold border-2 border-slate-700">
+                          {r.customerName}
+                          {r.syncStatus === 'pending' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
+                          {r.syncStatus === 'error' && (
+                            <div className="mt-1 flex items-center gap-2">
+                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">❌ Lỗi gửi</span>
+                               <button onClick={() => retryDeliveryReport(r.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded shadow hover:bg-red-700">Gửi lại</button>
+                            </div>
+                          )}
+                        </td>
                         <td className="py-5 px-6 text-center font-extrabold border-2 border-slate-700">{r.quantity}</td>
                         <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700">{r.unitPrice.toLocaleString()} ₫</td>
                         <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700">{r.actualReceived.toLocaleString()} ₫</td>

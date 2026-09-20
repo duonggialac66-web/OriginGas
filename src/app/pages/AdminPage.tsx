@@ -163,9 +163,9 @@ export function AdminPage() {
 
   const handleImportInventory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (importData.fullQuantity <= 0) return toast.error('Số lượng nhập phải lớn hơn 0');
-    await importInventory(importData.type, importData.fullQuantity);
-    toast.success(`Đã nhập kho ${importData.type}`);
+    if (!importData.type) return toast.error('Vui lòng nhập tên sản phẩm');
+    await importInventory(importData.type, 0); // Quantity is 0 as it's no longer tracked
+    toast.success(`Đã thêm sản phẩm ${importData.type}`);
     setImportData({ type: '', fullQuantity: 0 });
   };
 
@@ -369,7 +369,7 @@ export function AdminPage() {
             }`}
           >
             <Database className="w-6 h-6" />
-            Quản lý kho
+            Sản phẩm
           </button>
           <button
             onClick={() => setActiveTab('salary')}
@@ -967,16 +967,16 @@ export function AdminPage() {
               </div>
               <div>
                 <h2 className="text-3xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  Quản lý kho
+                  Quản lý sản phẩm
                 </h2>
-                <p className="text-gray-600 font-medium mt-1">📦 Cập nhật số lượng bình gas</p>
+                <p className="text-gray-600 font-medium mt-1">📦 Thêm và danh sách sản phẩm</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Danh sách kho */}
+              {/* Danh sách sản phẩm */}
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Tồn kho hiện tại</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Danh sách sản phẩm</h3>
                 <div className="space-y-4">
                   {inventory.length > 0 ? (
                     inventory.map(item => (
@@ -985,98 +985,35 @@ export function AdminPage() {
                           <Package className="w-6 h-6 text-orange-500" />
                           <span className="font-bold text-gray-800">{item.containerType}</span>
                         </div>
-                        {editingInventoryId === item.id ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="0"
-                              value={editInventoryQuantity.full}
-                              onChange={(e) => setEditInventoryQuantity({ ...editInventoryQuantity, full: parseInt(e.target.value) || 0 })}
-                              className="w-16 px-2 py-1 text-right border-2 border-green-500 rounded-lg outline-none font-bold text-gray-900"
-                              title="Số lượng"
-                            />
-                            <button
-                              onClick={async () => {
-                                await updateInventoryQuantity(item.id, editInventoryQuantity.full);
-                                setEditingInventoryId(null);
-                                toast.success('Đã cập nhật số lượng kho');
-                              }}
-                              className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                            >
-                              <CheckCircle className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setEditingInventoryId(null)}
-                              className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
-                            >
-                              <XCircle className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-4">
-                            <div className="flex flex-col items-end">
-                              <div className="text-xl font-extrabold text-green-600">
-                                {item.fullQuantity} <span className="text-xs font-medium text-green-600/70">bình</span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setEditingInventoryId(item.id);
-                                setEditInventoryQuantity({ full: item.fullQuantity });
-                              }}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            >
-                              <Edit className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-6 text-gray-500 font-medium">Kho đang trống</div>
+                    <div className="text-center py-6 text-gray-500 font-medium">Chưa có sản phẩm nào</div>
                   )}
                 </div>
               </div>
 
-              {/* Nhập kho */}
+              {/* Thêm sản phẩm */}
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Nhập hàng vào kho</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Thêm sản phẩm mới</h3>
                 <form onSubmit={handleImportInventory} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-2">Loại bình</label>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">Tên sản phẩm</label>
                     <input
                       type="text"
-                      list="containerTypes"
                       value={importData.type}
                       onChange={e => setImportData({ ...importData, type: e.target.value })}
-                      placeholder="VD: Bình 12kg..."
+                      placeholder="VD: Bình xám 12kg..."
                       className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                       required
                     />
-                    <datalist id="containerTypes">
-                      {inventory.map(inv => (
-                        <option key={inv.id} value={inv.containerType} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800 mb-2">Số lượng</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={importData.fullQuantity === 0 ? '' : importData.fullQuantity}
-                        onChange={e => setImportData({ ...importData, fullQuantity: parseInt(e.target.value) || 0 })}
-                        className="w-full px-5 py-3.5 text-gray-900 border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                      />
-                    </div>
                   </div>
                   <button
                     type="submit"
                     className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-gray-100 py-4 rounded-xl font-bold hover:scale-[1.02] transition-all shadow-xl"
                   >
                     <PlusCircle className="w-5 h-5" />
-                    Thêm vào kho
+                    Thêm sản phẩm
                   </button>
                 </form>
               </div>

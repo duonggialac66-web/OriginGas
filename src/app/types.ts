@@ -21,6 +21,7 @@ export interface DeliveryReport {
   notes: string;
   paymentStatus: 'paid' | 'debt';
   createdAt: string;
+  syncStatus?: 'pending' | 'synced' | 'error';
 }
 
 export interface Customer {

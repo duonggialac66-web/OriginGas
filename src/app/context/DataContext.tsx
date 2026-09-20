@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo, ReactNode } fr
 import { DeliveryReport, Employee, Expense, Inventory, SalaryConfig, CalculatedSalary, SalaryFormula, Customer } from '../types';
 import { API_BASE_URL } from '../lib/api';
 import { hashCustomerName } from '../lib/hashName';
+import { toast } from 'sonner';
 
 interface DataContextType {
   deliveryReports: DeliveryReport[];
@@ -12,13 +13,13 @@ interface DataContextType {
   expenses: Expense[];
   customers: Customer[];
   addDeliveryReport: (report: Omit<DeliveryReport, 'id' | 'createdAt'>) => Promise<{ success: boolean; message?: string }>;
+  retryDeliveryReport: (id: string) => Promise<void>;
   updateDeliveryReport: (id: string, report: Omit<DeliveryReport, 'id' | 'createdAt' | 'employeeId' | 'employeeName'>) => Promise<{ success: boolean; message?: string }>;
   deleteDeliveryReport: (id: string) => Promise<{ success: boolean; message?: string }>;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
   importInventory: (containerType: string, fullQty: number) => Promise<void>;
-  updateInventoryQuantity: (id: string, fullQty: number) => Promise<void>;
   updateSalaryConfig: (containerType: string, commission: number) => Promise<void>;
   getCalculatedSalaries: (month: string) => Promise<CalculatedSalary[]>;
   updateSalaryFormula: (formula: string) => Promise<void>;
@@ -96,31 +97,80 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem('gasToken');
     if (!token) return { success: false, message: 'Chưa đăng nhập' };
 
+    // Tạo ID giả tạm thời để render ngay
+    const optimisticId = `temp-${Date.now()}`;
+    const tempReport = {
+      ...report,
+      id: optimisticId,
+      createdAt: new Date().toISOString(),
+      syncStatus: 'pending'
+    } as DeliveryReport;
+
+    // 1. Cập nhật giao diện lập tức (Zero Latency)
+    setDeliveryReports(prev => [tempReport, ...prev]);
+
+    // 2. Gửi request ngầm
+    fetch(`${API_BASE_URL}/api/reports`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify(report)
+    })
+    .then(async res => {
+      if (res.ok) {
+        const data = await res.json();
+        // Thay bản ghi tạm bằng bản ghi thật từ server
+        setDeliveryReports(prev => prev.map(r => r.id === optimisticId ? { ...data, syncStatus: 'synced' } : r));
+      } else {
+        const errData = await res.json();
+        // Đánh dấu lỗi
+        setDeliveryReports(prev => prev.map(r => r.id === optimisticId ? { ...r, syncStatus: 'error' } : r));
+        window.alert('❌ LỖI LƯU BÁO CÁO:\n' + (errData.message || 'Lỗi server. Vui lòng kiểm tra lại.'));
+      }
+    })
+    .catch(() => {
+      // Đánh dấu lỗi mạng
+      setDeliveryReports(prev => prev.map(r => r.id === optimisticId ? { ...r, syncStatus: 'error' } : r));
+      window.alert('📶 LỖI MẠNG:\nKhông thể kết nối đến máy chủ. Báo cáo vẫn được giữ trên màn hình, hãy bấm "Gửi lại" khi có mạng!');
+    });
+
+    // Trả về thành công ngay lập tức để UI xóa form
+    return { success: true };
+  };
+
+  const retryDeliveryReport = async (id: string) => {
+    const reportToRetry = deliveryReports.find(r => r.id === id);
+    if (!reportToRetry) return;
+    
+    // Đổi trạng thái thành pending
+    setDeliveryReports(prev => prev.map(r => r.id === id ? { ...r, syncStatus: 'pending' } : r));
+    
+    const token = localStorage.getItem('gasToken');
+    if (!token) return;
+
+    // Loại bỏ các trường không hợp lệ trước khi gửi
+    const { id: _, createdAt, syncStatus, ...reportPayload } = reportToRetry;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(report)
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(reportPayload)
       });
-      const data = await res.json();
       if (res.ok) {
-        setDeliveryReports([data, ...deliveryReports]);
-        
-        // Cập nhật lại kho ở frontend (Trừ bình đầy)
-        setInventory(prev => prev.map(inv => 
-          inv.containerType === report.containerType 
-            ? { ...inv, fullQuantity: inv.fullQuantity - report.quantity } 
-            : inv
-        ));
-        return { success: true };
+        const data = await res.json();
+        setDeliveryReports(prev => prev.map(r => r.id === id ? { ...data, syncStatus: 'synced' } : r));
+        toast.success('Đã gửi lại báo cáo thành công!');
       } else {
-        return { success: false, message: data.message };
+        const errData = await res.json();
+        setDeliveryReports(prev => prev.map(r => r.id === id ? { ...r, syncStatus: 'error' } : r));
+        window.alert('❌ LỖI LƯU BÁO CÁO:\n' + (errData.message || 'Lỗi server.'));
       }
     } catch (error) {
-      return { success: false, message: 'Lỗi mạng khi gọi server' };
+      setDeliveryReports(prev => prev.map(r => r.id === id ? { ...r, syncStatus: 'error' } : r));
+      window.alert('📶 LỖI MẠNG:\nVẫn không thể kết nối. Vui lòng thử lại sau!');
     }
   };
 
@@ -140,15 +190,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (res.ok) {
         setDeliveryReports(prev => prev.map(rep => rep.id === id ? data : rep));
-        
-        // Cập nhật lại kho ở frontend bằng cách fetch lại từ server
-        const invRes = await fetch(`${API_BASE_URL}/api/inventory`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const invData = await invRes.json();
-        if (Array.isArray(invData)) {
-          setInventory(invData);
-        }
         
         return { success: true };
       } else {
@@ -171,7 +212,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (res.ok) {
         setDeliveryReports(prev => prev.filter(r => r.id !== id));
-        fetchAllData(token);
         return { success: true };
       }
       return { success: false, message: data.message };
@@ -269,27 +309,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateInventoryQuantity = async (id: string, fullQuantity: number) => {
-    const token = localStorage.getItem('gasToken');
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/inventory/${id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ fullQuantity })
-      });
-      if (res.ok) {
-        const updatedItem = await res.json();
-        setInventory(prev => prev.map(i => i.id === id ? updatedItem : i));
-      }
-    } catch (error) {
-      console.error('Lỗi khi sửa kho:', error);
-    }
-  };
+  // updateInventoryQuantity removed as it's no longer tracked.
 
   const updateSalaryConfig = async (containerType: string, commission: number) => {
     const token = localStorage.getItem('gasToken');
@@ -564,13 +584,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       expenses,
       customers,
       addDeliveryReport,
+      retryDeliveryReport,
       updateDeliveryReport,
       deleteDeliveryReport,
       addEmployee,
       updateEmployee,
       deleteEmployee,
       importInventory,
-      updateInventoryQuantity,
       updateSalaryConfig,
       getCalculatedSalaries,
       updateSalaryFormula,
