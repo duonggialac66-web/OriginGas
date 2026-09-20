@@ -11,14 +11,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('gasDeliveryUser');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return null;
+      }
     }
-  }, []);
+    return null;
+  });
 
   const login = (user: User, token?: string) => {
     setUser(user);
