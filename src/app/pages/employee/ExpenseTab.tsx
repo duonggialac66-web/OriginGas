@@ -107,33 +107,33 @@ export function ExpenseTab({ selectedDate }: { selectedDate: string }) {
           </div>
           
           <div className="overflow-x-auto pb-4">
-            <table className="w-full text-base border-collapse bg-white border-2 border-slate-700 min-w-[500px]">
+            <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
               <thead>
                 <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                  <th className="text-left py-5 px-6 font-extrabold border-2 border-slate-700">Mô tả</th>
-                  <th className="text-right py-5 px-6 font-extrabold border-2 border-slate-700">Số tiền</th>
-                  <th className="text-left py-5 px-6 font-extrabold border-2 border-slate-700">Ghi chú</th>
-                  <th className="text-center py-5 px-6 font-extrabold border-2 border-slate-700">Thao tác</th>
+                  <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Mô tả</th>
+                  <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Số tiền</th>
+                  <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Ghi chú</th>
+                  <th className="text-center p-1 sm:p-2 font-extrabold border-2 border-slate-700">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {myExpensesFiltered.map((exp, i) => (
                   <tr key={exp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
-                    <td className="py-5 px-6 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
-                    <td className="py-5 px-6 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
-                    <td className="py-5 px-6 font-bold text-gray-600 border-2 border-slate-700">{exp.notes || '-'}</td>
-                    <td className="py-5 px-6 text-center flex justify-center gap-2 border-2 border-slate-700">
-                      <button onClick={() => handleStartEditExpense(exp)} className="p-2 text-blue-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-4 h-4"/></button>
-                      <button onClick={() => handleDeleteExpense(exp.id)} className="p-2 text-red-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><X className="w-4 h-4"/></button>
+                    <td className="p-1 sm:p-2 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
+                    <td className="p-1 sm:p-2 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
+                    <td className="p-1 sm:p-2 font-bold text-gray-600 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{exp.notes || '-'}</td>
+                    <td className="p-1 sm:p-2 text-center flex flex-col sm:flex-row justify-center gap-1 sm:gap-2 border-2 border-slate-700">
+                      <button onClick={() => handleStartEditExpense(exp)} className="p-1 sm:p-2 text-blue-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-3 h-3 sm:w-4 sm:h-4"/></button>
+                      <button onClick={() => handleDeleteExpense(exp.id)} className="p-1 sm:p-2 text-red-600 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50"><X className="w-3 h-3 sm:w-4 sm:h-4"/></button>
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="bg-slate-200 text-slate-900 border-t-2 border-slate-700">
-                  <td className="py-5 px-6 font-bold border-2 border-slate-700">Tổng chi</td>
-                  <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
-                  <td colSpan={2} className="border-2 border-slate-700"></td>
+                  <td className="p-1 sm:p-2 font-bold border-2 border-slate-700">Tổng chi</td>
+                  <td className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
+                  <td colSpan={2} className="p-1 sm:p-2 border-2 border-slate-700"></td>
                 </tr>
               </tfoot>
             </table>
