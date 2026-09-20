@@ -40,7 +40,6 @@ export function AdminPage() {
     updateEmployee, 
     deleteEmployee, 
     importInventory, 
-    updateInventoryQuantity,
     updateSalaryConfig,
     getCalculatedSalaries,
     updateSalaryFormula,
