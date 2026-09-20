@@ -15,7 +15,6 @@ export class CustomersService {
     return prisma.customer.findMany({
       where: whereClause,
       orderBy: { updatedAt: 'desc' },
-      take: 100,
     });
   }
 
