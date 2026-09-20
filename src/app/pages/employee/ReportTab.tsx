@@ -465,24 +465,24 @@ export function ReportTab() {
               </div>
 
               <div className="overflow-x-auto pb-4">
-                <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
-                  <thead className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
+                <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border border-slate-400">
+                  <thead className="bg-slate-100 text-slate-900 border-b border-slate-400">
                     <tr>
-                      <th className="p-1 sm:p-2 text-left font-extrabold border-2 border-slate-700">Khách hàng</th>
-                      <th className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">Trạng thái</th>
-                      <th className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">SL</th>
-                      <th className="p-1 sm:p-2 text-left font-extrabold border-2 border-slate-700">Loại bình</th>
-                      <th className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">Đơn giá</th>
-                      <th className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">Thành tiền</th>
-                      <th className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">Thực nhận</th>
-                      <th className="p-1 sm:p-2 text-left font-extrabold border-2 border-slate-700">Ghi chú</th>
-                      <th className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">Thao tác</th>
+                      <th className="p-1 sm:p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
+                      <th className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">Trạng thái</th>
+                      <th className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">SL</th>
+                      <th className="p-1 sm:p-2 text-left font-extrabold border border-slate-400">Loại bình</th>
+                      <th className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">Đơn giá</th>
+                      <th className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">Thành tiền</th>
+                      <th className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">Thực nhận</th>
+                      <th className="p-1 sm:p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
+                      <th className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredGasReports.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
-                        <td className="p-1 sm:p-2 font-bold text-slate-900 border-2 border-slate-700">
+                        <td className="p-1 sm:p-2 font-bold text-slate-900 border border-slate-400">
                           <div className="flex items-center gap-1.5">
                             {r.customerName}
                             {r.customer?.latitude && (
@@ -497,7 +497,7 @@ export function ReportTab() {
                             </div>
                           )}
                         </td>
-                        <td className="p-1 sm:p-2 text-center border-2 border-slate-700">
+                        <td className="p-1 sm:p-2 text-center border border-slate-400">
                           <button 
                             onClick={async () => {
                               const newStatus = r.paymentStatus === 'debt' ? 'paid' : 'debt';
@@ -513,13 +513,13 @@ export function ReportTab() {
                             {r.paymentStatus === 'debt' ? '🔴 Nợ' : '✅ Đã TT'}
                           </button>
                         </td>
-                        <td className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">{r.quantity}</td>
-                        <td className="p-1 sm:p-2 font-bold text-gray-700 border-2 border-slate-700">{r.containerType}</td>
-                        <td className="p-1 sm:p-2 text-right font-bold text-gray-700 border-2 border-slate-700">{r.unitPrice.toLocaleString()} ₫</td>
-                        <td className="p-1 sm:p-2 text-right font-extrabold text-slate-900 border-2 border-slate-700">{r.total.toLocaleString()} ₫</td>
-                        <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border-2 border-slate-700">{r.actualReceived.toLocaleString()} ₫</td>
-                        <td className="p-1 sm:p-2 text-left text-gray-600 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
-                        <td className="p-1 sm:p-2 text-center flex flex-col sm:flex-row justify-center gap-1 border-2 border-slate-700">
+                        <td className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">{r.quantity}</td>
+                        <td className="p-1 sm:p-2 font-bold text-gray-700 border border-slate-400">{r.containerType}</td>
+                        <td className="p-1 sm:p-2 text-right font-bold text-gray-700 border border-slate-400">{r.unitPrice.toLocaleString()} ₫</td>
+                        <td className="p-1 sm:p-2 text-right font-extrabold text-slate-900 border border-slate-400">{r.total.toLocaleString()} ₫</td>
+                        <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border border-slate-400">{r.actualReceived.toLocaleString()} ₫</td>
+                        <td className="p-1 sm:p-2 text-left text-gray-600 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
+                        <td className="p-1 sm:p-2 text-center flex flex-col sm:flex-row justify-center gap-1 border border-slate-400">
                           <button onClick={() => handleStartEdit(r)} className="p-1 sm:p-2 text-blue-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-3 h-3 sm:w-4 sm:h-4"/></button>
                           <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="p-1 sm:p-2 text-red-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><X className="w-3 h-3 sm:w-4 sm:h-4"/></button>
                         </td>
@@ -568,21 +568,21 @@ export function ReportTab() {
             <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
               <h3 className="text-xl font-extrabold text-slate-900 mb-4">Lịch sử Gas lon</h3>
               <div className="overflow-x-auto pb-4">
-                <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
-                  <thead className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
+                <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border border-slate-400">
+                  <thead className="bg-slate-100 text-slate-900 border-b border-slate-400">
                     <tr>
-                      <th className="p-1 sm:p-2 text-left font-extrabold border-2 border-slate-700">Khách hàng</th>
-                      <th className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">SL</th>
-                      <th className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">Giá bán</th>
-                      <th className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">Thực nhận</th>
-                      <th className="p-1 sm:p-2 text-left font-extrabold border-2 border-slate-700">Ghi chú</th>
-                      <th className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">Xóa</th>
+                      <th className="p-1 sm:p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
+                      <th className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">SL</th>
+                      <th className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">Giá bán</th>
+                      <th className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">Thực nhận</th>
+                      <th className="p-1 sm:p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
+                      <th className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">Xóa</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cannedGasReportsFiltered.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                        <td className="p-1 sm:p-2 font-bold border-2 border-slate-700">
+                        <td className="p-1 sm:p-2 font-bold border border-slate-400">
                           {r.customerName}
                           {r.syncStatus === 'pending' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
                           {r.syncStatus === 'error' && (
@@ -592,11 +592,11 @@ export function ReportTab() {
                             </div>
                           )}
                         </td>
-                        <td className="p-1 sm:p-2 text-center font-extrabold border-2 border-slate-700">{r.quantity}</td>
-                        <td className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">{r.unitPrice.toLocaleString()} ₫</td>
-                        <td className="p-1 sm:p-2 text-right font-extrabold border-2 border-slate-700">{r.actualReceived.toLocaleString()} ₫</td>
-                        <td className="p-1 sm:p-2 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
-                        <td className="p-1 sm:p-2 text-center flex justify-center border-2 border-slate-700">
+                        <td className="p-1 sm:p-2 text-center font-extrabold border border-slate-400">{r.quantity}</td>
+                        <td className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">{r.unitPrice.toLocaleString()} ₫</td>
+                        <td className="p-1 sm:p-2 text-right font-extrabold border border-slate-400">{r.actualReceived.toLocaleString()} ₫</td>
+                        <td className="p-1 sm:p-2 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
+                        <td className="p-1 sm:p-2 text-center flex justify-center border border-slate-400">
                           <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="text-red-600 p-1 sm:p-2 bg-white rounded shadow-sm border-2 border-gray-300 hover:bg-gray-50"><X className="w-3 h-3 sm:w-4 sm:h-4"/></button>
                         </td>
                       </tr>
@@ -643,40 +643,40 @@ export function ReportTab() {
                 <div className="mt-8 mb-6">
                   <h4 className="text-base font-bold text-emerald-700 mb-3 flex items-center gap-2"><ArrowUpCircle className="w-4 h-4" /> Bảng kê Gas lớn</h4>
                   <div className="overflow-x-auto pb-4">
-                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
+                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border border-slate-400">
                       <thead>
-                        <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Khách hàng</th>
-                          <th className="text-center p-1 sm:p-2 font-extrabold border-2 border-slate-700">SL</th>
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Loại bình</th>
-                          <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Đơn giá</th>
-                          <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Thành tiền</th>
-                          <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Thực nhận</th>
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Ghi chú</th>
+                        <tr className="bg-slate-100 text-slate-900 border-b border-slate-400">
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Khách hàng</th>
+                          <th className="text-center p-1 sm:p-2 font-extrabold border border-slate-400">SL</th>
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Loại bình</th>
+                          <th className="text-right p-1 sm:p-2 font-extrabold border border-slate-400">Đơn giá</th>
+                          <th className="text-right p-1 sm:p-2 font-extrabold border border-slate-400">Thành tiền</th>
+                          <th className="text-right p-1 sm:p-2 font-extrabold border border-slate-400">Thực nhận</th>
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Ghi chú</th>
                         </tr>
                       </thead>
                       <tbody>
                         {gasReportsFiltered.map((r, i) => (
                           <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                            <td className="p-1 sm:p-2 font-bold text-slate-900 border-2 border-slate-700">{r.customerName}</td>
-                            <td className="p-1 sm:p-2 text-center font-bold text-slate-900 border-2 border-slate-700">{r.quantity}</td>
-                            <td className="p-1 sm:p-2 font-bold text-gray-700 border-2 border-slate-700">{r.containerType}</td>
-                            <td className="p-1 sm:p-2 text-right font-bold text-slate-900 border-2 border-slate-700">{r.unitPrice.toLocaleString('vi-VN')} ₫</td>
-                            <td className="p-1 sm:p-2 text-right font-bold text-slate-900 border-2 border-slate-700">{r.total.toLocaleString('vi-VN')} ₫</td>
-                            <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border-2 border-slate-700">{r.actualReceived.toLocaleString('vi-VN')} ₫</td>
-                            <td className="p-1 sm:p-2 text-gray-600 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes || '-'}</td>
+                            <td className="p-1 sm:p-2 font-bold text-slate-900 border border-slate-400">{r.customerName}</td>
+                            <td className="p-1 sm:p-2 text-center font-bold text-slate-900 border border-slate-400">{r.quantity}</td>
+                            <td className="p-1 sm:p-2 font-bold text-gray-700 border border-slate-400">{r.containerType}</td>
+                            <td className="p-1 sm:p-2 text-right font-bold text-slate-900 border border-slate-400">{r.unitPrice.toLocaleString('vi-VN')} ₫</td>
+                            <td className="p-1 sm:p-2 text-right font-bold text-slate-900 border border-slate-400">{r.total.toLocaleString('vi-VN')} ₫</td>
+                            <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border border-slate-400">{r.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                            <td className="p-1 sm:p-2 text-gray-600 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
-                          <td className="p-1 sm:p-2 font-bold border-2 border-slate-700">Tổng</td>
-                          <td className="p-1 sm:p-2 text-center font-bold border-2 border-slate-700">{totalDeliveredFiltered}</td>
-                          <td className="p-1 sm:p-2 border-2 border-slate-700"></td>
-                          <td className="p-1 sm:p-2 border-2 border-slate-700"></td>
-                          <td className="p-1 sm:p-2 text-right font-bold border-2 border-slate-700">{gasReportsFiltered.reduce((sum, r) => sum + r.total, 0).toLocaleString('vi-VN')} ₫</td>
-                          <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border-2 border-slate-700">{gasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
-                          <td className="p-1 sm:p-2 border-2 border-slate-700"></td>
+                        <tr className="bg-slate-100 text-gray-900 border-t border-slate-400">
+                          <td className="p-1 sm:p-2 font-bold border border-slate-400">Tổng</td>
+                          <td className="p-1 sm:p-2 text-center font-bold border border-slate-400">{totalDeliveredFiltered}</td>
+                          <td className="p-1 sm:p-2 border border-slate-400"></td>
+                          <td className="p-1 sm:p-2 border border-slate-400"></td>
+                          <td className="p-1 sm:p-2 text-right font-bold border border-slate-400">{gasReportsFiltered.reduce((sum, r) => sum + r.total, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="p-1 sm:p-2 text-right font-extrabold text-blue-700 border border-slate-400">{gasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="p-1 sm:p-2 border border-slate-400"></td>
                         </tr>
                       </tfoot>
                     </table>
@@ -689,31 +689,31 @@ export function ReportTab() {
                 <div className="mb-6">
                   <h4 className="text-base font-bold text-teal-700 mb-3 flex items-center gap-2"><ArrowUpCircle className="w-4 h-4" /> Bảng kê Gas lon</h4>
                   <div className="overflow-x-auto pb-4">
-                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
+                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border border-slate-400">
                       <thead>
-                        <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Khách hàng</th>
-                          <th className="text-center p-1 sm:p-2 font-extrabold border-2 border-slate-700">SL (lon)</th>
-                          <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Thực nhận</th>
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Ghi chú</th>
+                        <tr className="bg-slate-100 text-slate-900 border-b border-slate-400">
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Khách hàng</th>
+                          <th className="text-center p-1 sm:p-2 font-extrabold border border-slate-400">SL (lon)</th>
+                          <th className="text-right p-1 sm:p-2 font-extrabold border border-slate-400">Thực nhận</th>
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Ghi chú</th>
                         </tr>
                       </thead>
                       <tbody>
                         {cannedGasReportsFiltered.map((r, i) => (
                           <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                            <td className="p-1 sm:p-2 font-bold text-slate-900 border-2 border-slate-700">{r.customerName}</td>
-                            <td className="p-1 sm:p-2 text-center font-bold text-slate-900 border-2 border-slate-700">{r.quantity}</td>
-                            <td className="p-1 sm:p-2 text-right font-extrabold text-teal-700 border-2 border-slate-700">{r.actualReceived.toLocaleString('vi-VN')} ₫</td>
-                            <td className="p-1 sm:p-2 text-gray-600 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes || '-'}</td>
+                            <td className="p-1 sm:p-2 font-bold text-slate-900 border border-slate-400">{r.customerName}</td>
+                            <td className="p-1 sm:p-2 text-center font-bold text-slate-900 border border-slate-400">{r.quantity}</td>
+                            <td className="p-1 sm:p-2 text-right font-extrabold text-teal-700 border border-slate-400">{r.actualReceived.toLocaleString('vi-VN')} ₫</td>
+                            <td className="p-1 sm:p-2 text-gray-600 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
-                          <td className="p-1 sm:p-2 font-bold border-2 border-slate-700">Tổng</td>
-                          <td className="p-1 sm:p-2 text-center font-bold border-2 border-slate-700">{totalCannedDeliveredFiltered}</td>
-                          <td className="p-1 sm:p-2 text-right font-extrabold text-teal-700 border-2 border-slate-700">{cannedGasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
-                          <td className="p-1 sm:p-2 border-2 border-slate-700"></td>
+                        <tr className="bg-slate-100 text-gray-900 border-t border-slate-400">
+                          <td className="p-1 sm:p-2 font-bold border border-slate-400">Tổng</td>
+                          <td className="p-1 sm:p-2 text-center font-bold border border-slate-400">{totalCannedDeliveredFiltered}</td>
+                          <td className="p-1 sm:p-2 text-right font-extrabold text-teal-700 border border-slate-400">{cannedGasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="p-1 sm:p-2 border border-slate-400"></td>
                         </tr>
                       </tfoot>
                     </table>
@@ -726,28 +726,28 @@ export function ReportTab() {
                 <div>
                   <h4 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2"><ArrowDownCircle className="w-4 h-4" /> Bảng kê Chi phí</h4>
                   <div className="overflow-x-auto pb-4">
-                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border-2 border-slate-700">
+                    <table className="w-full text-xs sm:text-sm lg:text-base border-collapse bg-white border border-slate-400">
                       <thead>
-                        <tr className="bg-slate-200 text-slate-900 border-b-2 border-slate-700">
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Mô tả</th>
-                          <th className="text-right p-1 sm:p-2 font-extrabold border-2 border-slate-700">Số tiền</th>
-                          <th className="text-left p-1 sm:p-2 font-extrabold border-2 border-slate-700">Ghi chú</th>
+                        <tr className="bg-slate-100 text-slate-900 border-b border-slate-400">
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Mô tả</th>
+                          <th className="text-right p-1 sm:p-2 font-extrabold border border-slate-400">Số tiền</th>
+                          <th className="text-left p-1 sm:p-2 font-extrabold border border-slate-400">Ghi chú</th>
                         </tr>
                       </thead>
                       <tbody>
                         {expenses.filter(e => e.employeeId === user!.id && e.date === selectedDate).map((exp, i) => (
                           <tr key={exp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                            <td className="p-1 sm:p-2 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
-                            <td className="p-1 sm:p-2 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
-                            <td className="p-1 sm:p-2 text-gray-600 border-2 border-slate-700 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{exp.notes || '-'}</td>
+                            <td className="p-1 sm:p-2 font-bold text-slate-900 border border-slate-400">{exp.description}</td>
+                            <td className="p-1 sm:p-2 text-right font-extrabold text-red-600 border border-slate-400">{exp.amount.toLocaleString('vi-VN')} ₫</td>
+                            <td className="p-1 sm:p-2 text-gray-600 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{exp.notes || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
-                          <td className="p-1 sm:p-2 font-bold border-2 border-slate-700">Tổng chi</td>
-                          <td className="p-1 sm:p-2 text-right font-extrabold text-red-700 border-2 border-slate-700">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
-                          <td className="p-1 sm:p-2 border-2 border-slate-700"></td>
+                        <tr className="bg-slate-100 text-gray-900 border-t border-slate-400">
+                          <td className="p-1 sm:p-2 font-bold border border-slate-400">Tổng chi</td>
+                          <td className="p-1 sm:p-2 text-right font-extrabold text-red-700 border border-slate-400">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
+                          <td className="p-1 sm:p-2 border border-slate-400"></td>
                         </tr>
                       </tfoot>
                     </table>
