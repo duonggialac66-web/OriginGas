@@ -12,6 +12,7 @@ export function ReportTab() {
   const { addDeliveryReport, updateDeliveryReport, deleteDeliveryReport, deliveryReports, inventory, expenses, updateReportPaymentStatus, customers, addCustomer } = useData();
 
   const [activeSection, setActiveSection] = useState<'gas-big' | 'gas-small' | 'expense' | 'summary'>('gas-big');
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // FORMS
@@ -103,7 +104,7 @@ export function ReportTab() {
     const payload = {
       employeeId: user!.id,
       employeeName: user!.name,
-      date: new Date().toISOString().split('T')[0],
+      date: selectedDate,
       customerName: inputCustomerName,
       customerId: finalCustomerId || undefined,
       quantity,
@@ -186,7 +187,7 @@ export function ReportTab() {
     const res = await addDeliveryReport({
       employeeId: user!.id,
       employeeName: user!.name,
-      date: new Date().toISOString().split('T')[0],
+      date: selectedDate,
       customerName,
       customerId,
       quantity,
@@ -195,6 +196,7 @@ export function ReportTab() {
       total: quantity * sellingPrice,
       actualReceived: quantity * sellingPrice,
       notes,
+      paymentStatus: 'paid',
     });
     if (res && !res.success) { toast.error(res.message); return; }
     toast.success('Ghi nhận gas lon thành công');
@@ -217,7 +219,7 @@ export function ReportTab() {
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const file = new File([blob], `baocao-${new Date().toISOString().split('T')[0]}.png`, { type: 'image/png' });
+      const file = new File([blob], `baocao-${selectedDate}.png`, { type: 'image/png' });
 
       if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ title: 'Báo cáo doanh thu', files: [file] });
@@ -233,19 +235,18 @@ export function ReportTab() {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const myReportsToday = deliveryReports.filter(r => r.employeeId === user!.id && r.date === today);
-  const gasReportsToday = myReportsToday.filter(r => r.containerType !== 'Gas lon');
-  const cannedGasReportsToday = myReportsToday.filter(r => r.containerType === 'Gas lon');
+  const myReportsFiltered = deliveryReports.filter(r => r.employeeId === user!.id && r.date === selectedDate);
+  const gasReportsFiltered = myReportsFiltered.filter(r => r.containerType !== 'Gas lon');
+  const cannedGasReportsFiltered = myReportsFiltered.filter(r => r.containerType === 'Gas lon');
 
-  const filteredGasReports = gasReportsToday.filter(r => debtFilter === 'all' || r.paymentStatus === debtFilter);
+  const filteredGasReports = gasReportsFiltered.filter(r => debtFilter === 'all' || r.paymentStatus === debtFilter);
 
-  const totalDeliveredToday = gasReportsToday.reduce((sum, r) => sum + r.quantity, 0);
-  const totalCannedDeliveredToday = cannedGasReportsToday.reduce((sum, r) => sum + r.quantity, 0);
-  const totalRevenueToday = myReportsToday.reduce((sum, r) => sum + r.total, 0);
-  const totalActualReceivedToday = myReportsToday.reduce((sum, r) => sum + r.actualReceived, 0);
-  const totalExpenseToday = expenses.filter(e => e.employeeId === user!.id && e.date === today).reduce((s, e) => s + e.amount, 0);
-  const netToday = totalActualReceivedToday - totalExpenseToday;
+  const totalDeliveredFiltered = gasReportsFiltered.reduce((sum, r) => sum + r.quantity, 0);
+  const totalCannedDeliveredFiltered = cannedGasReportsFiltered.reduce((sum, r) => sum + r.quantity, 0);
+  const totalRevenueFiltered = myReportsFiltered.reduce((sum, r) => sum + r.total, 0);
+  const totalActualReceivedFiltered = myReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0);
+  const totalExpenseFiltered = expenses.filter(e => e.employeeId === user!.id && e.date === selectedDate).reduce((s, e) => s + e.amount, 0);
+  const netFiltered = totalActualReceivedFiltered - totalExpenseFiltered;
 
   const menuOptions = [
     { id: 'gas-big', label: 'Báo cáo Gas Lớn', icon: <Flame className="w-5 h-5 text-orange-500" /> },
@@ -256,6 +257,39 @@ export function ReportTab() {
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* DATE FILTER */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-200 gap-3">
+        <div className="font-bold text-gray-700 flex items-center gap-2">
+          Xem báo cáo ngày:
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} 
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Hôm nay
+          </button>
+          <button 
+            onClick={() => setSelectedDate(new Date(Date.now() - 86400000).toISOString().split('T')[0])} 
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Hôm qua
+          </button>
+          <button 
+            onClick={() => setSelectedDate(new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0])} 
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${selectedDate === new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0] ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Hôm kia
+          </button>
+          <input 
+            type="date" 
+            value={selectedDate} 
+            onChange={(e) => setSelectedDate(e.target.value)} 
+            className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm font-bold text-gray-700 outline-none"
+          />
+        </div>
+      </div>
+
       {/* 3 CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
@@ -263,9 +297,9 @@ export function ReportTab() {
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
-            <div className="text-sm font-bold text-gray-500">Số đơn hôm nay</div>
+            <div className="text-sm font-bold text-gray-500">Số đơn</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{gasReportsToday.length}</div>
+          <div className="text-3xl font-extrabold text-gray-900">{gasReportsFiltered.length}</div>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-2">
@@ -274,7 +308,7 @@ export function ReportTab() {
             </div>
             <div className="text-sm font-bold text-gray-500">Tổng số bình</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{totalDeliveredToday}</div>
+          <div className="text-3xl font-extrabold text-gray-900">{totalDeliveredFiltered}</div>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-2">
@@ -283,7 +317,7 @@ export function ReportTab() {
             </div>
             <div className="text-sm font-bold text-gray-500">Doanh thu (VNĐ)</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{(totalRevenueToday / 1000000).toFixed(1)}M</div>
+          <div className="text-3xl font-extrabold text-gray-900">{(totalRevenueFiltered / 1000000).toFixed(1)}M</div>
         </div>
       </div>
 
@@ -419,10 +453,10 @@ export function ReportTab() {
           </div>
 
           {/* LỊCH SỬ GAS LỚN VỚI TABLE */}
-          {gasReportsToday.length > 0 && (
+          {gasReportsFiltered.length > 0 && (
             <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200 z-10 relative">
               <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">Lịch sử Gas lớn hôm nay</h3>
+                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">Lịch sử Gas lớn</h3>
                 <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setDebtFilter('all')} className={`px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'all' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Tất cả</button>
                   <button onClick={() => setDebtFilter('debt')} className={`px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'debt' ? 'bg-red-500 text-white shadow' : 'text-red-500 hover:bg-red-50'}`}>🔴 Khách nợ</button>
@@ -521,7 +555,7 @@ export function ReportTab() {
           </div>
 
           {/* LỊCH SỬ GAS LON */}
-          {cannedGasReportsToday.length > 0 && (
+          {cannedGasReportsFiltered.length > 0 && (
             <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
               <h3 className="text-xl font-extrabold text-slate-900 mb-4">Lịch sử Gas lon</h3>
               <div className="overflow-x-auto pb-4">
@@ -537,7 +571,7 @@ export function ReportTab() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cannedGasReportsToday.map((r, i) => (
+                    {cannedGasReportsFiltered.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                         <td className="py-5 px-6 font-bold border-2 border-slate-700">{r.customerName}</td>
                         <td className="py-5 px-6 text-center font-extrabold border-2 border-slate-700">{r.quantity}</td>
@@ -558,36 +592,36 @@ export function ReportTab() {
       )}
 
       {activeSection === 'expense' && (
-        <ExpenseTab />
+        <ExpenseTab selectedDate={selectedDate} />
       )}
 
       {activeSection === 'summary' && (
         <div className="animate-fade-in space-y-6">
           {/* TỔNG HỢP VỚI TABLE */}
-          {(gasReportsToday.length > 0 || expenses.length > 0) ? (
+          {(gasReportsFiltered.length > 0 || expenses.length > 0) ? (
             <div id="export-summary-section" className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-extrabold text-slate-900">📊 Thu / Chi hôm nay</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">📊 Thu / Chi</h3>
                 <button data-html2canvas-ignore="true" onClick={handleExportToZalo} disabled={isExporting} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5 hover:bg-blue-700 transition-colors"><Share2 className="w-4 h-4"/> Gửi Zalo</button>
               </div>
               
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-green-50 border border-green-200 p-4 rounded-2xl">
                   <div className="text-xs font-bold text-green-700 uppercase mb-1 flex items-center gap-1"><ArrowUpCircle className="w-4 h-4" /> Thu</div>
-                  <div className="text-lg font-extrabold text-green-900">{totalActualReceivedToday.toLocaleString()} ₫</div>
+                  <div className="text-lg font-extrabold text-green-900">{totalActualReceivedFiltered.toLocaleString()} ₫</div>
                 </div>
                 <div className="bg-red-50 border border-red-200 p-4 rounded-2xl">
                   <div className="text-xs font-bold text-red-700 uppercase mb-1 flex items-center gap-1"><ArrowDownCircle className="w-4 h-4" /> Chi</div>
-                  <div className="text-lg font-extrabold text-red-900">{totalExpenseToday.toLocaleString()} ₫</div>
+                  <div className="text-lg font-extrabold text-red-900">{totalExpenseFiltered.toLocaleString()} ₫</div>
                 </div>
                 <div className="col-span-2 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-center justify-between">
                   <div className="text-sm font-bold text-blue-800 uppercase flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Thực nhận (Cầm về)</div>
-                  <div className="text-2xl font-extrabold text-blue-900">{netToday.toLocaleString()} ₫</div>
+                  <div className="text-2xl font-extrabold text-blue-900">{netFiltered.toLocaleString()} ₫</div>
                 </div>
               </div>
 
               {/* Bảng chi tiết THU: Gas lớn */}
-              {gasReportsToday.length > 0 && (
+              {gasReportsFiltered.length > 0 && (
                 <div className="mt-8 mb-6">
                   <h4 className="text-base font-bold text-emerald-700 mb-3 flex items-center gap-2"><ArrowUpCircle className="w-4 h-4" /> Bảng kê Gas lớn</h4>
                   <div className="overflow-x-auto pb-4">
@@ -603,7 +637,7 @@ export function ReportTab() {
                         </tr>
                       </thead>
                       <tbody>
-                        {gasReportsToday.map((r, i) => (
+                        {gasReportsFiltered.map((r, i) => (
                           <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                             <td className="py-4 px-5 font-bold text-slate-900 border-2 border-slate-700">{r.customerName}</td>
                             <td className="py-4 px-5 text-center font-bold text-slate-900 border-2 border-slate-700">{r.quantity}</td>
@@ -617,10 +651,10 @@ export function ReportTab() {
                       <tfoot>
                         <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
                           <td className="py-4 px-5 font-bold border-2 border-slate-700">Tổng</td>
-                          <td className="py-4 px-5 text-center font-bold border-2 border-slate-700">{totalDeliveredToday}</td>
+                          <td className="py-4 px-5 text-center font-bold border-2 border-slate-700">{totalDeliveredFiltered}</td>
                           <td className="py-4 px-5 border-2 border-slate-700"></td>
-                          <td className="py-4 px-5 text-right font-bold border-2 border-slate-700">{gasReportsToday.reduce((sum, r) => sum + r.total, 0).toLocaleString('vi-VN')} ₫</td>
-                          <td className="py-4 px-5 text-right font-extrabold text-blue-700 border-2 border-slate-700">{gasReportsToday.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-4 px-5 text-right font-bold border-2 border-slate-700">{gasReportsFiltered.reduce((sum, r) => sum + r.total, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-4 px-5 text-right font-extrabold text-blue-700 border-2 border-slate-700">{gasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
                           <td className="py-4 px-5 border-2 border-slate-700"></td>
                         </tr>
                       </tfoot>
@@ -630,7 +664,7 @@ export function ReportTab() {
               )}
 
               {/* Bảng chi tiết THU: Gas lon */}
-              {cannedGasReportsToday.length > 0 && (
+              {cannedGasReportsFiltered.length > 0 && (
                 <div className="mb-6">
                   <h4 className="text-base font-bold text-teal-700 mb-3 flex items-center gap-2"><ArrowUpCircle className="w-4 h-4" /> Bảng kê Gas lon</h4>
                   <div className="overflow-x-auto pb-4">
@@ -644,7 +678,7 @@ export function ReportTab() {
                         </tr>
                       </thead>
                       <tbody>
-                        {cannedGasReportsToday.map((r, i) => (
+                        {cannedGasReportsFiltered.map((r, i) => (
                           <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                             <td className="py-4 px-5 font-bold text-slate-900 border-2 border-slate-700">{r.customerName}</td>
                             <td className="py-4 px-5 text-center font-bold text-slate-900 border-2 border-slate-700">{r.quantity}</td>
@@ -656,8 +690,8 @@ export function ReportTab() {
                       <tfoot>
                         <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
                           <td className="py-4 px-5 font-bold border-2 border-slate-700">Tổng</td>
-                          <td className="py-4 px-5 text-center font-bold border-2 border-slate-700">{totalCannedDeliveredToday}</td>
-                          <td className="py-4 px-5 text-right font-extrabold text-teal-700 border-2 border-slate-700">{cannedGasReportsToday.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-4 px-5 text-center font-bold border-2 border-slate-700">{totalCannedDeliveredFiltered}</td>
+                          <td className="py-4 px-5 text-right font-extrabold text-teal-700 border-2 border-slate-700">{cannedGasReportsFiltered.reduce((sum, r) => sum + r.actualReceived, 0).toLocaleString('vi-VN')} ₫</td>
                           <td className="py-4 px-5 border-2 border-slate-700"></td>
                         </tr>
                       </tfoot>
@@ -667,7 +701,7 @@ export function ReportTab() {
               )}
 
               {/* Bảng chi tiết CHI */}
-              {expenses.filter(e => e.employeeId === user!.id && e.date === today).length > 0 && (
+              {expenses.filter(e => e.employeeId === user!.id && e.date === selectedDate).length > 0 && (
                 <div>
                   <h4 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2"><ArrowDownCircle className="w-4 h-4" /> Bảng kê Chi phí</h4>
                   <div className="overflow-x-auto pb-4">
@@ -680,7 +714,7 @@ export function ReportTab() {
                         </tr>
                       </thead>
                       <tbody>
-                        {expenses.filter(e => e.employeeId === user!.id && e.date === today).map((exp, i) => (
+                        {expenses.filter(e => e.employeeId === user!.id && e.date === selectedDate).map((exp, i) => (
                           <tr key={exp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                             <td className="py-4 px-5 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
                             <td className="py-4 px-5 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
@@ -691,7 +725,7 @@ export function ReportTab() {
                       <tfoot>
                         <tr className="bg-slate-200 text-gray-900 border-t-2 border-slate-700">
                           <td className="py-4 px-5 font-bold border-2 border-slate-700">Tổng chi</td>
-                          <td className="py-4 px-5 text-right font-extrabold text-red-700 border-2 border-slate-700">{totalExpenseToday.toLocaleString('vi-VN')} ₫</td>
+                          <td className="py-4 px-5 text-right font-extrabold text-red-700 border-2 border-slate-700">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
                           <td className="py-4 px-5 border-2 border-slate-700"></td>
                         </tr>
                       </tfoot>

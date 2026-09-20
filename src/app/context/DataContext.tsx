@@ -30,7 +30,7 @@ interface DataContextType {
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<{ success: boolean; message?: string }>;
   updateCustomerLocation: (id: string, latitude: number, longitude: number) => Promise<void>;
-  updateReportPaymentStatus: (id: string, status: 'paid' | 'debt') => Promise<void>;
+  updateReportPaymentStatus: (id: string, status: 'paid' | 'debt') => Promise<{ success: boolean; message?: string }>;
   customerMap: Map<string, Customer>;
 }
 

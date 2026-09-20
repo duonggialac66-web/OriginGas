@@ -4,7 +4,7 @@ import { useData } from '../../context/DataContext';
 import { Pencil, Minus, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function ExpenseTab() {
+export function ExpenseTab({ selectedDate }: { selectedDate: string }) {
   const { user } = useAuth();
   const { expenses, addExpense, updateExpense, deleteExpense } = useData();
 
@@ -18,9 +18,8 @@ export function ExpenseTab() {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const myExpensesToday = expenses.filter(e => e.employeeId === user?.id && e.date === today);
-  const totalExpenseToday = myExpensesToday.reduce((sum, e) => sum + e.amount, 0);
+  const myExpensesFiltered = expenses.filter(e => e.employeeId === user?.id && e.date === selectedDate);
+  const totalExpenseFiltered = myExpensesFiltered.reduce((sum, e) => sum + e.amount, 0);
 
   const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +33,7 @@ export function ExpenseTab() {
       toast.success('Đã cập nhật khoản chi!');
       setEditingExpenseId(null);
     } else {
-      const res = await addExpense({ employeeId: user!.id, date: today, description: expenseForm.description, amount, notes: expenseForm.notes });
+      const res = await addExpense({ employeeId: user!.id, date: selectedDate, description: expenseForm.description, amount, notes: expenseForm.notes });
       if (!res.success) { toast.error(res.message || 'Lỗi thêm khoản chi'); return; }
       toast.success('Đã ghi nhận khoản chi!');
     }
@@ -101,7 +100,7 @@ export function ExpenseTab() {
       </div>
 
       {/* BẢNG LỊCH SỬ CHI PHÍ */}
-      {myExpensesToday.length > 0 && (
+      {myExpensesFiltered.length > 0 && (
         <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-extrabold text-slate-900">Lịch sử hôm nay</h3>
@@ -118,7 +117,7 @@ export function ExpenseTab() {
                 </tr>
               </thead>
               <tbody>
-                {myExpensesToday.map((exp, i) => (
+                {myExpensesFiltered.map((exp, i) => (
                   <tr key={exp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
                     <td className="py-5 px-6 font-bold text-slate-900 border-2 border-slate-700">{exp.description}</td>
                     <td className="py-5 px-6 text-right font-extrabold text-red-600 border-2 border-slate-700">{exp.amount.toLocaleString('vi-VN')} ₫</td>
@@ -133,7 +132,7 @@ export function ExpenseTab() {
               <tfoot>
                 <tr className="bg-slate-200 text-slate-900 border-t-2 border-slate-700">
                   <td className="py-5 px-6 font-bold border-2 border-slate-700">Tổng chi</td>
-                  <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseToday.toLocaleString('vi-VN')} ₫</td>
+                  <td className="py-5 px-6 text-right font-extrabold border-2 border-slate-700 text-red-700">{totalExpenseFiltered.toLocaleString('vi-VN')} ₫</td>
                   <td colSpan={2} className="border-2 border-slate-700"></td>
                 </tr>
               </tfoot>
