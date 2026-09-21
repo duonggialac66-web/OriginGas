@@ -455,37 +455,105 @@ export function ReportTab() {
             </form>
           </div>
 
-          {/* LỊCH SỬ GAS LỚN VỚI TABLE */}
+          {/* LỊCH SỬ GAS LỚN */}
           {gasReportsFiltered.length > 0 && (
-            <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200 z-10 relative">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">Lịch sử Gas lớn</h3>
-                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                  <button onClick={() => setDebtFilter('all')} className={`px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'all' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Tất cả</button>
-                  <button onClick={() => setDebtFilter('debt')} className={`px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'debt' ? 'bg-red-500 text-white shadow' : 'text-red-500 hover:bg-red-50'}`}>🔴 Khách nợ</button>
-                  <button onClick={() => setDebtFilter('paid')} className={`px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'paid' ? 'bg-green-500 text-white shadow' : 'text-green-600 hover:bg-green-50'}`}>✅ Đã TT</button>
+            <div className="bg-white rounded-3xl shadow-sm p-4 sm:p-6 border border-gray-200 z-10 relative">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 flex items-center gap-2">Lịch sử Gas lớn</h3>
+                <div className="flex gap-1.5 sm:gap-2 bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+                  <button onClick={() => setDebtFilter('all')} className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'all' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Tất cả</button>
+                  <button onClick={() => setDebtFilter('debt')} className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'debt' ? 'bg-red-500 text-white shadow' : 'text-red-500 hover:bg-red-50'}`}>🔴 Nợ</button>
+                  <button onClick={() => setDebtFilter('paid')} className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-bold text-xs ${debtFilter === 'paid' ? 'bg-green-500 text-white shadow' : 'text-green-600 hover:bg-green-50'}`}>✅ Đã TT</button>
                 </div>
               </div>
 
-              <div className="overflow-x-auto pb-4">
-                <table className="w-full text-[8px] sm:text-xs lg:text-sm border-collapse bg-white border border-slate-400">
+              {/* MOBILE: Card layout */}
+              <div className="md:hidden space-y-3">
+                {filteredGasReports.map((r) => (
+                  <div key={r.id} className="border border-gray-200 rounded-2xl p-4 bg-gray-50/50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-extrabold text-slate-900 text-sm">{r.customerName}</span>
+                          {r.customer?.latitude && (
+                            <a href={`https://www.google.com/maps/search/?api=1&query=${r.customer.latitude},${r.customer.longitude}`} target="_blank" rel="noreferrer" className="text-blue-500"><Navigation className="w-4 h-4"/></a>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{r.containerType}</div>
+                        {r.syncStatus === 'pending' && <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
+                        {r.syncStatus === 'error' && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">❌ Lỗi gửi</span>
+                            <button onClick={() => retryDeliveryReport(r.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded shadow hover:bg-red-700">Gửi lại</button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const newStatus = r.paymentStatus === 'debt' ? 'paid' : 'debt';
+                          const res = await updateReportPaymentStatus(r.id, newStatus);
+                          if (res?.success) {
+                            toast.success(`Đã đổi trạng thái thành: ${newStatus === 'debt' ? 'Khách nợ' : 'Đã thu tiền'}`);
+                          } else {
+                            toast.error(res?.message || 'Lỗi khi cập nhật trạng thái');
+                          }
+                        }}
+                        className={`ml-2 shrink-0 px-2.5 py-1 rounded-full text-xs font-bold border-2 ${r.paymentStatus === 'debt' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-green-50 text-green-700 border-green-300'}`}
+                      >
+                        {r.paymentStatus === 'debt' ? '🔴 Nợ' : '✅ Đã TT'}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm mb-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">SL:</span>
+                        <span className="font-extrabold text-slate-900">{r.quantity}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Đơn giá:</span>
+                        <span className="font-bold text-slate-700">{r.unitPrice.toLocaleString()} ₫</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Thành tiền:</span>
+                        <span className="font-extrabold text-slate-900">{r.total.toLocaleString()} ₫</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Thực nhận:</span>
+                        <span className="font-extrabold text-blue-700">{r.actualReceived.toLocaleString()} ₫</span>
+                      </div>
+                    </div>
+                    {r.notes && <div className="text-xs text-gray-500 mb-3 truncate">📝 {r.notes}</div>}
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                      <button onClick={() => handleStartEdit(r)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-blue-600 bg-white border border-blue-200 rounded-xl text-xs font-bold hover:bg-blue-50">
+                        <Pencil className="w-3.5 h-3.5"/> Sửa
+                      </button>
+                      <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-red-600 bg-white border border-red-200 rounded-xl text-xs font-bold hover:bg-red-50">
+                        <X className="w-3.5 h-3.5"/> Xóa
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP: Table layout */}
+              <div className="hidden md:block overflow-x-auto pb-4">
+                <table className="w-full text-sm border-collapse bg-white border border-slate-400">
                   <thead className="bg-slate-100 text-slate-900 border-b border-slate-400">
                     <tr>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Trạng thái</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">SL</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-left font-extrabold border border-slate-400">Loại bình</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Đơn giá</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thành tiền</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thực nhận</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Thao tác</th>
+                      <th className="p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
+                      <th className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Trạng thái</th>
+                      <th className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">SL</th>
+                      <th className="p-2 text-left font-extrabold border border-slate-400">Loại bình</th>
+                      <th className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Đơn giá</th>
+                      <th className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thành tiền</th>
+                      <th className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thực nhận</th>
+                      <th className="p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
+                      <th className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredGasReports.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100`}>
-                        <td className="px-0.5 py-0.5 sm:p-2 font-bold text-slate-900 border border-slate-400">
+                        <td className="p-2 font-bold text-slate-900 border border-slate-400">
                           <div className="flex items-center gap-1.5">
                             {r.customerName}
                             {r.customer?.latitude && (
@@ -500,7 +568,7 @@ export function ReportTab() {
                             </div>
                           )}
                         </td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-center border border-slate-400">
+                        <td className="p-2 text-center border border-slate-400">
                           <button 
                             onClick={async () => {
                               const newStatus = r.paymentStatus === 'debt' ? 'paid' : 'debt';
@@ -511,20 +579,22 @@ export function ReportTab() {
                                 toast.error(res?.message || 'Lỗi khi cập nhật trạng thái');
                               }
                             }}
-                            className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold border-2 ${r.paymentStatus === 'debt' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-green-50 text-green-700 border-green-300'}`}
+                            className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${r.paymentStatus === 'debt' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-green-50 text-green-700 border-green-300'}`}
                           >
                             {r.paymentStatus === 'debt' ? '🔴 Nợ' : '✅ Đã TT'}
                           </button>
                         </td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">{r.quantity}</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 font-bold text-gray-700 border border-slate-400">{r.containerType}</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-bold text-gray-700 border border-slate-400">{r.unitPrice.toLocaleString()}  ₫</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold text-slate-900 border border-slate-400">{r.total.toLocaleString()}  ₫</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold text-blue-700 border border-slate-400">{r.actualReceived.toLocaleString()}  ₫</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-left text-gray-600 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-center flex flex-col sm:flex-row justify-center gap-1 border border-slate-400">
-                          <button onClick={() => handleStartEdit(r)} className="px-0.5 py-0.5 sm:p-2 text-blue-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-3 h-3 sm:w-4 sm:h-4"/></button>
-                          <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="px-0.5 py-0.5 sm:p-2 text-red-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><X className="w-3 h-3 sm:w-4 sm:h-4"/></button>
+                        <td className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">{r.quantity}</td>
+                        <td className="p-2 font-bold text-gray-700 border border-slate-400">{r.containerType}</td>
+                        <td className="p-2 text-right whitespace-nowrap font-bold text-gray-700 border border-slate-400">{r.unitPrice.toLocaleString()}  ₫</td>
+                        <td className="p-2 text-right whitespace-nowrap font-extrabold text-slate-900 border border-slate-400">{r.total.toLocaleString()}  ₫</td>
+                        <td className="p-2 text-right whitespace-nowrap font-extrabold text-blue-700 border border-slate-400">{r.actualReceived.toLocaleString()}  ₫</td>
+                        <td className="p-2 text-left text-gray-600 border border-slate-400 text-xs max-w-[120px] truncate">{r.notes}</td>
+                        <td className="p-2 text-center border border-slate-400">
+                          <div className="flex justify-center gap-1">
+                            <button onClick={() => handleStartEdit(r)} className="p-2 text-blue-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><Pencil className="w-4 h-4"/></button>
+                            <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="p-2 text-red-600 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50"><X className="w-4 h-4"/></button>
+                          </div>
                         </td>
                       </tr>
                     ))}
