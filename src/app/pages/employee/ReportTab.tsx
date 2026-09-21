@@ -90,13 +90,10 @@ export function ReportTab() {
          finalCustomerId = exactMatch.id;
        } else {
          if (window.confirm(`Khách hàng "${inputCustomerName}" chưa có sẵn trong CSDL.\nBạn có muốn lưu khách hàng này vào CSDL không?`)) {
-           try {
-             const newCustomer = await addCustomer({ name: inputCustomerName });
-             finalCustomerId = newCustomer.id;
-             toast.success('Đã lưu khách hàng mới vào CSDL');
-           } catch (error: any) {
-             toast.error('Lỗi khi lưu khách hàng: ' + error.message);
-           }
+           // Chạy ngầm - không chờ kết quả
+           addCustomer({ name: inputCustomerName })
+             .then(() => toast.success('Đã lưu khách hàng mới vào CSDL'))
+             .catch((error: any) => toast.error('Lỗi khi lưu khách hàng: ' + error.message));
          }
        }
     }
@@ -173,13 +170,10 @@ export function ReportTab() {
         customerId = exactMatch.id;
       } else {
         if (window.confirm(`Khách hàng "${customerName}" chưa có sẵn trong CSDL.\nBạn có muốn lưu khách hàng này vào CSDL không?`)) {
-          try {
-            const newCustomer = await addCustomer({ name: customerName });
-            customerId = newCustomer.id;
-            toast.success('Đã lưu khách hàng mới vào CSDL');
-          } catch (error: any) {
-            toast.error('Lỗi khi lưu khách hàng: ' + error.message);
-          }
+          // Chạy ngầm - không chờ kết quả
+          addCustomer({ name: customerName })
+            .then(() => toast.success('Đã lưu khách hàng mới vào CSDL'))
+            .catch((error: any) => toast.error('Lỗi khi lưu khách hàng: ' + error.message));
         }
       }
     }
@@ -424,15 +418,24 @@ export function ReportTab() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-base font-bold text-gray-800 mb-2">Đơn giá</label>
-                    <input type="number" value={formData.unitPrice} onChange={e => setFormData({...formData, unitPrice: e.target.value})} onBlur={e => handlePriceBlur(e.target.value, val => setFormData({...formData, unitPrice: val}))} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl text-slate-900" placeholder="VND" />
+                <div>
+                  <label className="block text-base font-bold text-gray-800 mb-2">Đơn giá</label>
+                  <input type="number" value={formData.unitPrice} onChange={e => setFormData({...formData, unitPrice: e.target.value})} onBlur={e => handlePriceBlur(e.target.value, val => setFormData({...formData, unitPrice: val}))} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl text-slate-900" placeholder="VND" />
+                </div>
+
+                {/* THÀNH TIỀN - computed */}
+                {(parseFloat(formData.quantity) > 0 && parseFloat(formData.unitPrice) > 0) && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-amber-800">💰 Thành tiền</span>
+                    <span className="text-lg font-extrabold text-amber-900">
+                      {(parseFloat(formData.quantity) * parseFloat(formData.unitPrice)).toLocaleString('vi-VN')} ₫
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-base font-bold text-gray-800 mb-2">Thực nhận</label>
-                    <input type="number" value={formData.actualReceived} onChange={e => setFormData({...formData, actualReceived: e.target.value})} onBlur={e => handlePriceBlur(e.target.value, val => setFormData({...formData, actualReceived: val}))} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl text-slate-900" placeholder="VND" />
-                  </div>
+                )}
+
+                <div>
+                  <label className="block text-base font-bold text-gray-800 mb-2">Thực nhận</label>
+                  <input type="number" value={formData.actualReceived} onChange={e => setFormData({...formData, actualReceived: e.target.value})} onBlur={e => handlePriceBlur(e.target.value, val => setFormData({...formData, actualReceived: val}))} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl text-slate-900" placeholder="VND" />
                 </div>
               </div>
 
@@ -558,6 +561,17 @@ export function ReportTab() {
                   <label className="block text-base font-bold text-gray-800 mb-2">Giá bán</label>
                   <input type="number" value={cannedGasForm.sellingPrice} onChange={e => setCannedGasForm({...cannedGasForm, sellingPrice: e.target.value})} onBlur={e => handlePriceBlur(e.target.value, v => setCannedGasForm({...cannedGasForm, sellingPrice: v}))} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl" required />
                 </div>
+
+                {/* THÀNH TIỀN GAS LON - computed */}
+                {(parseInt(cannedGasForm.quantity) > 0 && parseInt(cannedGasForm.sellingPrice) > 0) && (
+                  <div className="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-teal-800">💰 Thành tiền</span>
+                    <span className="text-lg font-extrabold text-teal-900">
+                      {(parseInt(cannedGasForm.quantity) * parseInt(cannedGasForm.sellingPrice)).toLocaleString('vi-VN')} ₫
+                    </span>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-base font-bold text-gray-800 mb-2">Ghi chú</label>
                   <input type="text" value={cannedGasForm.notes} onChange={e => setCannedGasForm({...cannedGasForm, notes: e.target.value})} className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl" placeholder="Ghi chú thêm" />
