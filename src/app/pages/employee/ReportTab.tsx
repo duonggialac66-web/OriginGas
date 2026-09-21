@@ -250,9 +250,9 @@ export function ReportTab() {
   ] as const;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-4 sm:space-y-6">
       {/* DATE FILTER */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-200 gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 gap-2 sm:gap-3">
         <div className="font-bold text-gray-700 flex items-center gap-2">
           Xem báo cáo ngày:
         </div>
@@ -285,39 +285,39 @@ export function ReportTab() {
       </div>
 
       {/* 3 CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-1 sm:mb-2">
+            <div className="w-7 h-7 sm:w-10 sm:h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+              <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <div className="text-sm font-bold text-gray-500">Số đơn</div>
+            <div className="text-[10px] sm:text-sm font-bold text-gray-500">Số đơn</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{gasReportsFiltered.length}</div>
+          <div className="text-xl sm:text-3xl font-extrabold text-gray-900">{gasReportsFiltered.length}</div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-              <Flame className="w-5 h-5 text-emerald-600" />
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-1 sm:mb-2">
+            <div className="w-7 h-7 sm:w-10 sm:h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+              <Flame className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-600" />
             </div>
-            <div className="text-sm font-bold text-gray-500">Tổng số bình</div>
+            <div className="text-[10px] sm:text-sm font-bold text-gray-500">Số bình</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{totalDeliveredFiltered}</div>
+          <div className="text-xl sm:text-3xl font-extrabold text-gray-900">{totalDeliveredFiltered}</div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-orange-600" />
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-200 flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-1 sm:mb-2">
+            <div className="w-7 h-7 sm:w-10 sm:h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-orange-600" />
             </div>
-            <div className="text-sm font-bold text-gray-500">Doanh thu (VNĐ)</div>
+            <div className="text-[10px] sm:text-sm font-bold text-gray-500">Doanh thu</div>
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">{(totalRevenueFiltered / 1000000).toFixed(1)}M</div>
+          <div className="text-xl sm:text-3xl font-extrabold text-gray-900">{(totalRevenueFiltered / 1000000).toFixed(1)}M</div>
         </div>
       </div>
 
       {/* HEADER VỚI HAMBURGER MENU */}
-      <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-200 relative z-50">
-        <div className="font-extrabold text-lg text-gray-900 flex items-center gap-2">
+      <div className="flex justify-between items-center bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 relative z-50">
+        <div className="font-extrabold text-base sm:text-lg text-gray-900 flex items-center gap-2">
           {menuOptions.find(o => o.id === activeSection)?.icon}
           {menuOptions.find(o => o.id === activeSection)?.label}
         </div>
@@ -351,14 +351,14 @@ export function ReportTab() {
       {activeSection === 'gas-big' && (
         <div className="space-y-6 animate-fade-in">
           {/* FORM BÁO CÁO GAS LỚN */}
-          <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200 relative z-40">
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-6 flex items-center gap-2">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-6 border border-gray-200 relative z-40">
+            <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 mb-4 sm:mb-6 flex items-center gap-2">
               {editingReportId ? <Pencil className="w-6 h-6 text-blue-600" /> : <Plus className="w-6 h-6 text-orange-600" />}
               {editingReportId ? 'Sửa báo cáo' : 'Thêm báo cáo'}
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <div className="relative">
                   <label className="block text-base font-bold text-gray-800 mb-2">Tên khách hàng</label>
                   <input
@@ -609,8 +609,8 @@ export function ReportTab() {
       {activeSection === 'gas-small' && (
         <div className="space-y-6 animate-fade-in">
           {/* FORM GAS LON */}
-          <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
-            <h2 className="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-2"><Plus className="w-6 h-6 text-teal-600" /> Bán Gas Lon</h2>
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-6 border border-gray-200">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 mb-4 sm:mb-6 flex items-center gap-2"><Plus className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" /> Bán Gas Lon</h2>
             <form onSubmit={handleCannedGasSubmit} className="space-y-5">
               <div className="grid grid-cols-1 gap-5">
                 <div>
@@ -653,24 +653,64 @@ export function ReportTab() {
 
           {/* LỊCH SỬ GAS LON */}
           {cannedGasReportsFiltered.length > 0 && (
-            <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-200">
-              <h3 className="text-xl font-extrabold text-slate-900 mb-4">Lịch sử Gas lon</h3>
-              <div className="overflow-x-auto pb-4">
-                <table className="w-full text-[8px] sm:text-xs lg:text-sm border-collapse bg-white border border-slate-400">
+            <div className="bg-white rounded-3xl shadow-sm p-4 sm:p-6 border border-gray-200">
+              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mb-4">Lịch sử Gas lon</h3>
+
+              {/* MOBILE: Card layout */}
+              <div className="md:hidden space-y-3">
+                {cannedGasReportsFiltered.map((r) => (
+                  <div key={r.id} className="border border-gray-200 rounded-2xl p-4 bg-gray-50/50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-slate-900 text-sm">{r.customerName}</span>
+                        {r.syncStatus === 'pending' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
+                        {r.syncStatus === 'error' && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">❌ Lỗi gửi</span>
+                            <button onClick={() => retryDeliveryReport(r.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded shadow hover:bg-red-700">Gửi lại</button>
+                          </div>
+                        )}
+                      </div>
+                      <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="ml-2 shrink-0 p-2 text-red-600 bg-white border border-red-200 rounded-xl hover:bg-red-50">
+                        <X className="w-4 h-4"/>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">SL:</span>
+                        <span className="font-extrabold text-slate-900">{r.quantity}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Giá bán:</span>
+                        <span className="font-bold text-slate-700">{r.unitPrice.toLocaleString()} ₫</span>
+                      </div>
+                      <div className="flex justify-between col-span-2">
+                        <span className="text-gray-500">Thực nhận:</span>
+                        <span className="font-extrabold text-teal-700">{r.actualReceived.toLocaleString()} ₫</span>
+                      </div>
+                    </div>
+                    {r.notes && <div className="text-xs text-gray-500 mt-2 truncate">📝 {r.notes}</div>}
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP: Table layout */}
+              <div className="hidden md:block overflow-x-auto pb-4">
+                <table className="w-full text-sm border-collapse bg-white border border-slate-400">
                   <thead className="bg-slate-100 text-slate-900 border-b border-slate-400">
                     <tr>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">SL</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Giá bán</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thực nhận</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
-                      <th className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Xóa</th>
+                      <th className="p-2 text-left font-extrabold border border-slate-400">Khách hàng</th>
+                      <th className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">SL</th>
+                      <th className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Giá bán</th>
+                      <th className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">Thực nhận</th>
+                      <th className="p-2 text-left font-extrabold border border-slate-400">Ghi chú</th>
+                      <th className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">Xóa</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cannedGasReportsFiltered.map((r, i) => (
                       <tr key={r.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                        <td className="px-0.5 py-0.5 sm:p-2 font-bold border border-slate-400">
+                        <td className="p-2 font-bold border border-slate-400">
                           {r.customerName}
                           {r.syncStatus === 'pending' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Đang gửi...</span>}
                           {r.syncStatus === 'error' && (
@@ -680,12 +720,12 @@ export function ReportTab() {
                             </div>
                           )}
                         </td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">{r.quantity}</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">{r.unitPrice.toLocaleString()}  ₫</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">{r.actualReceived.toLocaleString()}  ₫</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 border border-slate-400 text-[10px] sm:text-xs max-w-[80px] sm:max-w-[120px] truncate">{r.notes}</td>
-                        <td className="px-0.5 py-0.5 sm:p-2 text-center flex justify-center border border-slate-400">
-                          <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="text-red-600 px-0.5 py-0.5 sm:p-2 bg-white rounded shadow-sm border-2 border-gray-300 hover:bg-gray-50"><X className="w-3 h-3 sm:w-4 sm:h-4"/></button>
+                        <td className="p-2 text-center whitespace-nowrap font-extrabold border border-slate-400">{r.quantity}</td>
+                        <td className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">{r.unitPrice.toLocaleString()}  ₫</td>
+                        <td className="p-2 text-right whitespace-nowrap font-extrabold border border-slate-400">{r.actualReceived.toLocaleString()}  ₫</td>
+                        <td className="p-2 border border-slate-400 text-xs max-w-[120px] truncate">{r.notes}</td>
+                        <td className="p-2 text-center border border-slate-400">
+                          <button onClick={() => window.confirm('Xóa?') && deleteDeliveryReport(r.id)} className="p-2 text-red-600 bg-white rounded shadow-sm border-2 border-gray-300 hover:bg-gray-50"><X className="w-4 h-4"/></button>
                         </td>
                       </tr>
                     ))}
