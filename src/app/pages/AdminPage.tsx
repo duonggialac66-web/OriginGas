@@ -59,9 +59,7 @@ export function AdminPage() {
     baseSalary: '',
   });
 
-  const [importData, setImportData] = useState({ type: '', fullQuantity: 0 });
-  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null);
-  const [editInventoryQuantity, setEditInventoryQuantity] = useState({ full: 0 });
+  const [importData, setImportData] = useState({ type: '' });
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [calculatedSalaries, setCalculatedSalaries] = useState<any[]>([]);
   const [commissionForm, setCommissionForm] = useState({ containerType: '', commission: '' });
@@ -162,10 +160,10 @@ export function AdminPage() {
 
   const handleImportInventory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!importData.type) return toast.error('Vui lòng nhập tên sản phẩm');
-    await importInventory(importData.type, 0); // Quantity is 0 as it's no longer tracked
-    toast.success(`Đã thêm sản phẩm ${importData.type}`);
-    setImportData({ type: '', fullQuantity: 0 });
+    if (!importData.type.trim()) return toast.error('Vui lòng nhập tên sản phẩm');
+    await importInventory(importData.type.trim());
+    toast.success(`Đã thêm sản phẩm ${importData.type.trim()}`);
+    setImportData({ type: '' });
   };
 
   const handleLogout = () => {

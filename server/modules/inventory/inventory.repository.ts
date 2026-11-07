@@ -7,15 +7,13 @@ export class InventoryRepository {
     });
   }
 
-  async upsertInventory(containerType: string, quantityToAdd: number) {
+  async upsertInventory(containerType: string, _quantityToAdd?: number) {
     return prisma.inventory.upsert({
       where: { containerType },
-      update: {
-        fullQuantity: { increment: quantityToAdd },
-      },
+      update: {},
       create: {
         containerType,
-        fullQuantity: quantityToAdd,
+        fullQuantity: 0,
       },
     });
   }

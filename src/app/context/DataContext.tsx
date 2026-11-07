@@ -19,7 +19,7 @@ interface DataContextType {
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
-  importInventory: (containerType: string, fullQty: number) => Promise<void>;
+  importInventory: (containerType: string, fullQty?: number) => Promise<void>;
   updateSalaryConfig: (containerType: string, commission: number) => Promise<void>;
   getCalculatedSalaries: (month: string) => Promise<CalculatedSalary[]>;
   updateSalaryFormula: (formula: string) => Promise<void>;
@@ -281,7 +281,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const importInventory = async (containerType: string, fullQuantity: number) => {
+  const importInventory = async (containerType: string, fullQuantity: number = 0) => {
     const token = localStorage.getItem('gasToken');
     if (!token) return;
 
@@ -305,7 +305,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch (error) {
-      console.error('Lỗi khi nhập kho:', error);
+      console.error('Lỗi khi thêm sản phẩm:', error);
     }
   };
 

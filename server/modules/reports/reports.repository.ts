@@ -16,25 +16,10 @@ export class ReportsRepository {
   }
 
   async createReportTransaction(reportData: any) {
-    if (reportData.containerType === 'Gas lon') {
-      return prisma.$transaction([
-        prisma.deliveryReport.create({
-          data: reportData,
-          include: { employee: true, customer: true }
-        })
-      ]);
-    }
-
     return prisma.$transaction([
       prisma.deliveryReport.create({
         data: reportData,
         include: { employee: true, customer: true }
-      }),
-      prisma.inventory.update({
-        where: { containerType: reportData.containerType },
-        data: { 
-          fullQuantity: { decrement: reportData.quantity }
-        }
       })
     ]);
   }
@@ -54,47 +39,20 @@ export class ReportsRepository {
     });
   }
 
-  async updateReportTransaction(id: string, updateData: any, inventoryUpdates: { containerType: string, change: number }[]) {
-    const transactionOperations = [
+  async updateReportTransaction(id: string, updateData: any, _inventoryUpdates?: any[]) {
+    return prisma.$transaction([
       prisma.deliveryReport.update({
         where: { id },
         data: updateData,
         include: { employee: true, customer: true }
       })
-    ];
-
-    for (const update of inventoryUpdates) {
-      transactionOperations.push(
-        prisma.inventory.update({
-          where: { containerType: update.containerType },
-          data: {
-            fullQuantity: { increment: update.change }
-          }
-        }) as any
-      );
-    }
-
-    return prisma.$transaction(transactionOperations);
+    ]);
   }
 
-  async deleteReportTransaction(id: string, containerType: string, quantityToRestore: number) {
-    if (containerType === 'Gas lon') {
-      return prisma.$transaction([
-        prisma.deliveryReport.delete({
-          where: { id }
-        })
-      ]);
-    }
-
+  async deleteReportTransaction(id: string, _containerType?: string, _quantityToRestore?: number) {
     return prisma.$transaction([
       prisma.deliveryReport.delete({
         where: { id }
-      }),
-      prisma.inventory.update({
-        where: { containerType },
-        data: {
-          fullQuantity: { increment: quantityToRestore }
-        }
       })
     ]);
   }

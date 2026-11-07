@@ -5,19 +5,15 @@ export class InventoryService {
     return inventoryRepository.findAll();
   }
 
-  async importInventory(containerType: string, fullQuantity: number | string) {
-    const quantityToAdd = Number(fullQuantity) || 0;
-    if (quantityToAdd < 0) {
-      throw new Error('Số lượng nhập không hợp lệ');
+  async importInventory(containerType: string, _fullQuantity?: number | string) {
+    if (!containerType || !containerType.trim()) {
+      throw new Error('Tên sản phẩm không hợp lệ');
     }
-    return inventoryRepository.upsertInventory(containerType, quantityToAdd);
+    return inventoryRepository.upsertInventory(containerType.trim());
   }
 
   async updateInventory(id: string, fullQuantity: number | string) {
-    const newQuantity = Number(fullQuantity);
-    if (isNaN(newQuantity) || newQuantity < 0) {
-      throw new Error('Số lượng không hợp lệ');
-    }
+    const newQuantity = Number(fullQuantity) || 0;
     return inventoryRepository.updateInventoryById(id, newQuantity);
   }
 }

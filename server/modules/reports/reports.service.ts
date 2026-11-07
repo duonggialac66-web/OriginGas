@@ -28,13 +28,6 @@ export class ReportsService {
       throw new Error('Số lượng không hợp lệ');
     }
 
-    if (quantity > 0 && data.containerType !== 'Gas lon') {
-      const inventory = await reportsRepository.getInventoryByType(data.containerType);
-      if (!inventory || inventory.fullQuantity < quantity) {
-        throw new Error(`Kho không đủ bình đầy cho loại ${data.containerType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
-      }
-    }
-
     const reportData = {
       employeeId: userId,
       date: data.date,
@@ -74,40 +67,7 @@ export class ReportsService {
       throw new Error('Số lượng không hợp lệ');
     }
 
-    const oldType = existingReport.containerType;
-    const oldQty = existingReport.quantity;
     const newType = data.containerType;
-    const newQty = quantity;
-
-    const inventoryUpdates: { containerType: string, change: number }[] = [];
-
-    if (oldType === newType) {
-      const diff = newQty - oldQty; // Nếu newQty > oldQty, diff > 0, cần bớt đi trong kho
-      if (diff !== 0 && newType !== 'Gas lon') {
-        if (diff > 0) {
-          // Cần lấy thêm từ kho
-          const inventory = await reportsRepository.getInventoryByType(newType);
-          if (!inventory || inventory.fullQuantity < diff) {
-            throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${inventory ? inventory.fullQuantity : 0}`);
-          }
-        }
-        // change = -diff. Ví dụ: cần lấy thêm 2 bình, change = -2. Cần trả lại 2 bình, change = +2.
-        inventoryUpdates.push({ containerType: newType, change: -diff });
-      }
-    } else {
-      // Khác loại: trả lại số lượng cũ cho loại cũ, trừ số lượng mới từ loại mới
-      if (oldType !== 'Gas lon') {
-        inventoryUpdates.push({ containerType: oldType, change: oldQty });
-      }
-
-      if (newType !== 'Gas lon') {
-        const newInventory = await reportsRepository.getInventoryByType(newType);
-        if (!newInventory || newInventory.fullQuantity < newQty) {
-          throw new Error(`Kho không đủ bình đầy cho loại ${newType}. Hiện còn: ${newInventory ? newInventory.fullQuantity : 0}`);
-        }
-        inventoryUpdates.push({ containerType: newType, change: -newQty });
-      }
-    }
 
     const reportData = {
       date: data.date,
@@ -123,7 +83,7 @@ export class ReportsService {
       paymentStatus: data.paymentStatus || existingReport.paymentStatus,
     };
 
-    const [updatedReport] = await reportsRepository.updateReportTransaction(id, reportData, inventoryUpdates);
+    const [updatedReport] = await reportsRepository.updateReportTransaction(id, reportData);
 
     return {
       ...updatedReport,
@@ -142,7 +102,7 @@ export class ReportsService {
       throw new Error('Bạn không có quyền xóa báo cáo này');
     }
 
-    await reportsRepository.deleteReportTransaction(id, existingReport.containerType, existingReport.quantity);
+    await reportsRepository.deleteReportTransaction(id);
     return { success: true };
   }
 

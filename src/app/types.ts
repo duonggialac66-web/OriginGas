@@ -60,7 +60,7 @@ export interface Employee {
 export interface Inventory {
   id: string;
   containerType: string;
-  fullQuantity: number;
+  fullQuantity?: number;
 }
 
 export interface SalaryConfig {
